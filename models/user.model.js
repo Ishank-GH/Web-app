@@ -33,7 +33,10 @@ const userSchema = new mongoose.Schema(
     }],
     profilePicture: {
       type: String,
-    }
+      // default: ''
+    },
+    // googleId: String,
+    // githubId: String,
   },
   { timestamps: true }
 );
