@@ -1,0 +1,30 @@
+/* @font-face {
+    font-family: 'NeueHaasDisplay';
+    src: url('./assets/fonts/NeueHaasDisplay.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+
+
+    font-family: 'NeueMachina';
+    src: url('./assets/fonts/NeueMachina.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+html, body{
+    background-image: url('./compos/background_04min.jpeg');
+
+    background-size: 400%;    
+    overflow-x: hidden;
+    width: 100vw;
+    min-height: 100vh;
+    background-position: center;
+    background-attachment: scroll; 
+    background-color: brown;
+}
+ */
