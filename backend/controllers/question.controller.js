@@ -21,12 +21,12 @@ exports.getQuestion = asyncHandler(async(req, res) => {
         { $inc: { views: +1}},
         { new: true} //ensures to get the updated document
     )
-        .populate('author', 'username profilePicture')
+        .populate('author', 'username avatar')
         .populate({
             path: 'answers',
             populate: {
                 path: 'author',
-                select: 'username profilePicture'
+                select: 'username avatar'
             }
         });
 
@@ -42,7 +42,7 @@ exports.getQuestions = asyncHandler(async(req, res) => {
 
         const questions = await questionModel.find()
         .sort(sort)
-        .populate('author', 'username profilePicture')
+        .populate('author', 'username avatar')
         .populate({
             path: "answers",
             select: "body createdAt",

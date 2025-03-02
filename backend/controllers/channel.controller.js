@@ -1,16 +1,18 @@
+const asyncHandler = require('../middlewares/asyncHandler.middleware');
 const channelModel = require('../models/channel.model')
 const communityModel = require('../models/community.model')
 const channelService = require('../services/channel.service')
 
 
-exports.createChannel = async(req, res, next) => {
-    try{
+exports.createChannel = asyncHandler(async(req, res) => {
         const {name, type, communityId } = req.body;
 
         const community = await communityModel.findById(communityId);
 
         if(!community.admins.includes(req.user._id)){
-            throw new error(403, 'Admin access required')
+            const err = new Error('Admin access required')
+            err.statusCode = 403;
+            throw err;
         }
 
         const channel = await channelService.createChannel({
@@ -23,21 +25,17 @@ exports.createChannel = async(req, res, next) => {
             success: true,
             data: channel
         })
+})
 
-
-    }catch(error){
-        next(error)
-    }
-}
-
-exports.updateChannel = async(req, res, next) => {
-    try{
+exports.updateChannel = asyncHandler(async(req, res) => {
         const {name, type} = req.body
         const channel = await channelModel.findById(req.params.id)
         const community = await communityModel.findById(channel.community)
 
         if(!community.admins.includes(req.params._id)){
-            throw new error(403, 'Admin access required')
+            const err = new Error('Admin access required')
+            err.statusCode = 403;
+            throw err;
         }
         channel.name = name || channel.name;
         channel.type = type || channel.type;
@@ -48,20 +46,17 @@ exports.updateChannel = async(req, res, next) => {
             message: 'Channel updated',
             data: channel
         })
+})
 
-    }catch(error){
-        next(error)
-    }
-}
-
-exports.deleteChannel = async(req, res, next) => {
-    try{
-        const {name, type} = req.body
+exports.deleteChannel = asyncHandler(async(req, res) => {
+        // const {name, type} = req.body
         const channel = await channelModel.findById(req.params.id)
         const community = await communityModel.findById(channel.community)
 
         if(!community.admins.includes(req.params._id)){
-            throw new error(403, 'Admin access required')
+            const err = new Error('Admin access required')
+            err.statusCode = 403;
+            throw err;
         }
         
         await channel.deleteOne();
@@ -69,17 +64,12 @@ exports.deleteChannel = async(req, res, next) => {
         res.status(200).json({
             success: true,
             message: 'Channel deleted',
-            data: channel
         })
+})
 
-    }catch(error){
-        next(error)
-    }
-}
-
-exports.listOfChannels = async(req, res, next) => {
+exports.listOfChannels = asyncHandler(async(req, res) => {
     const channels = await channelModel.find({ 
         communities: req.params.communityId});
 
     res.json(channels)
-}
+})

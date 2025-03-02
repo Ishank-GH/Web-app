@@ -16,4 +16,8 @@ router.put('/:questionId/answers/:id', authMiddleware.authUser, [
 
 router.delete('/:questionId/answers/:id', authMiddleware.authUser, answerController.deleteAnswer)
 
+router.post('/:questionId/answers/:id/vote', authMiddleware.authUser, [
+    body("voteType").isIn(["upvote", "downvote"]).withMessage("Invalid vote Type")
+], answerController.voteAnswer )
+
 module.exports = router;

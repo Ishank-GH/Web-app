@@ -31,18 +31,12 @@ const UserSignup = () => {
       localStorage.setItem('token', data.token)
       navigate('/')
   }
-    
-
-
     setEmail('')
     setFirstName('')
     setLastName('')
-    setPassword('')
-    
+    setPassword('') 
   }
 
-
-  
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
         <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8">
@@ -64,7 +58,7 @@ const UserSignup = () => {
                   onChange={(e) => {
                      setUsername(e.target.value)
                   }}
-                  className="w-full pl-2 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full pl-2 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none transition"
                 />
               </div>
             </div>
@@ -79,7 +73,7 @@ const UserSignup = () => {
                   }}
                   type="email"
                   placeholder='email@example.com'
-                  className="w-full pl-2 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full pl-2 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none transition"
                 />
               </div>
             </div>
@@ -93,8 +87,8 @@ const UserSignup = () => {
                     setPassword(e.target.value)
                   }}
                   required type="password"
-                  placeholder='password'
-                  className="w-full pl-2 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder='Password'
+                  className="w-full pl-2 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none transition"
                 />
               </div>
             </div>
@@ -104,7 +98,7 @@ const UserSignup = () => {
             </button>
   
             <p className="text-center text-gray-600">
-              Already have an account?{' '}
+              Already have an account?
               <Link to="/login" className="text-blue-600 hover:underline">
                 Sign in
               </Link>

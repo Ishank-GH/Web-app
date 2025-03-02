@@ -1,24 +1,21 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { Link, useParams } from "react-router-dom";
+import { Link } from "react-router-dom";
 import formatDate from "../helper/Date";
 
 const QuestionList = () => {
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
+  const [sortBy, setSortBy] = useState("newest");
+  const [filter, setFilter] = useState("");
   const questionsPerPage = 10;
 
   useEffect(() => {
     const fetchQuestions = async () => {
       try {
-        const res = await axios.get(
-          `${import.meta.env.VITE_BASE_URL}/questions`
-        );
-        console.log("Fetched questions", res.data);
-
+        const res = await axios.get(`${import.meta.env.VITE_BASE_URL}/questions`);
         setQuestions(res.data);
-
         setLoading(false);
       } catch (err) {
         console.error("Error fetching questions:", err);
@@ -27,108 +24,167 @@ const QuestionList = () => {
     fetchQuestions();
   }, []);
 
-  //calculating total pages
-  const totalPages = Math.ceil(questions.length / questionsPerPage);
+  const filteredAndSortedQuestions = questions
+    .filter(question => 
+      question.title.toLowerCase().includes(filter.toLowerCase()) ||
+      question.body.toLowerCase().includes(filter.toLowerCase())
+    )
+    .sort((a, b) => {
+      switch (sortBy) {
+        case "votes": return b.voteCount - a.voteCount;
+        case "answers": return b.answers.length - a.answers.length;
+        case "views": return b.viewCount - a.viewCount;
+        default: return new Date(b.createdAt) - new Date(a.createdAt);
+      }
+    });
 
-  //last question index for the current page
-  const lastQuestionIndex = currentPage * questionsPerPage;
-
-  //first question index for the current page
-  const firstQuestionIndex = lastQuestionIndex - questionsPerPage;
-
-  //slicing questions array to get questions for this page
-  const currentQuestions = questions.slice(
-    firstQuestionIndex,
-    lastQuestionIndex
+  const currentQuestions = filteredAndSortedQuestions.slice(
+    (currentPage - 1) * questionsPerPage,
+    currentPage * questionsPerPage
   );
 
-  const handleNextPage = () => {
-    setCurrentPage((prev) => prev + 1);
-  };
+  const totalPages = Math.ceil(filteredAndSortedQuestions.length / questionsPerPage);
 
-  const handlePreviousPage = () => {
-    setCurrentPage((prev) => prev - 1);
-  };
+  console.log(questions)
 
   return (
-    <div className="max-w-4xl mx-auto p-4">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">All Questions</h1>
-        <Link
-          to="/questions/create"
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-        >
-          Ask Question
-        </Link>
+    <div className="max-w-7xl mx-auto">
+      {/* Header */}
+      <div className="bg-white rounded-xl shadow-sm p-6 mb-4">
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-800">All Questions</h1>
+            <p className="text-gray-500 text-sm mt-1">{questions.length} questions</p>
+          </div>
+          <Link
+            to="/questions/create"
+            className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-2 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all"
+          >
+            Ask Question
+          </Link>
+        </div>
+
+        <div className="mt-3 flex flex-col sm:flex-row gap-4">
+          <div className="relative flex-1">
+            <i className="ri-search-line absolute left-3 top-2 text-gray-400"></i>
+            <input
+              type="text"
+              placeholder="Search questions..."
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            className="px-4 py-2 border rounded-lg bg-white"
+          >
+            <option value="newest">Newest First</option>
+            <option value="votes">Most Votes</option>
+            <option value="answers">Most Answers</option>
+            <option value="views">Most Views</option>
+          </select>
+        </div>
       </div>
 
+      {/* Question List */}
       {loading ? (
-        <div className="text-center">Loading...</div>
-      ) : questions.length > 0 ? (
-        currentQuestions.map((question) => {
-          return (
-            <div
-              key={question._id}
-              className="p-4 border rounded-lg hover:shadow-md transition-shadow mb-4"
-            >
-              
-              <div className="mb-1 flex items-center text-sm text-gray-600">
-                <span>{question.voteCount} votes</span>
-                <span className="mx-2">•</span>
-                <span>{question.answers.length} answers</span>
-                <span className="mx-2">•</span>
-                <span>{question.viewCount} views</span>
-              </div>
-
-              <div className="flex justify-between">
-                <div>
-                  <h2 className="text-lg font-bold mb-2">{question.title}</h2>
-
-                  <p className=" text-gray-700 mb-3 line-clamp-3 overflow-hidden text-ellipsis break-words ">
-                    {question.body}
-                  </p>
-
-                  <Link
-                    to={`/questions/${question._id}`}
-                    className="text-blue-600 hover:underline"
-                  >
-                    View Details
-                  </Link>
+        <div className="text-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+        </div>
+      ) : currentQuestions.length > 0 ? (
+        <div className="space-y-4">
+          {currentQuestions.map((question) => (
+            <div key={question._id} className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+              <div className="flex gap-4 p-5">
+                <div className="flex flex-col items-center text-center min-w-[80px]">
+                  <div className="text-gray-700">
+                    <div className="font-bold text-xl">{question.voteCount}</div>
+                    <div className="text-sm">votes</div>
+                  </div>
+                  <div className={`mt-2 ${question.answers.length > 0 ? 'text-green-600' : 'text-gray-600'}`}>
+                    <div className="font-bold text-xl">{question.answers.length}</div>
+                    <div className="text-sm">answers</div>
+                  </div>
+                  <div className="mt-2 text-gray-500">
+                    <div className="text-sm">{question.viewCount} views</div>
+                  </div>
                 </div>
-                <div className="text-xs mt-[81px] text-gray-500 font-semibold flex items-center justify-between">
-                  <div> Asked by: {question.author.username} </div>
-                  <span className="ml-2">|</span>
-                  <div className="ml-2"> {formatDate(question.createdAt)}</div>
+                         
+                <div className="flex-1">
+                  <Link to={`/questions/${question._id}`} className="text-xl font-semibold text-blue-600 hover:text-blue-800">
+                    {question.title}
+                  </Link>
+                  <p className="mt-2 text-gray-600 line-clamp-2">{question.body}</p>
+                  
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {question.tags?.map(tag => (
+                      <span key={tag} className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+
+                  <div className="mt-4 flex justify-end text-sm text-gray-500">
+                    <div className="flex items-center">
+                      <img
+                        src={`${question.author.avatar}`}
+                        alt={question.author.username}
+                        className="w-6 h-6 rounded-full mr-2"
+                      />
+                      <span>Asked by {question.author.username}</span>
+                      <span className="mx-2">•</span>
+                      <span>{formatDate(question.createdAt)}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-          );
-        })
+          ))}
+        </div>
       ) : (
-        <div className="text-center">No questions found. </div>
+        <div className="text-center py-12 bg-white rounded-xl shadow-sm">
+          <i className="ri-questionnaire-line text-5xl text-gray-400 mb-4"></i>
+          <p className="text-gray-600">No questions found matching your criteria.</p>
+        </div>
       )}
 
-      {/* Pagination controls */}
-      <div className="flex items-center justify-center space-x-4 mt-6">
-        <button
-          onClick={handlePreviousPage}
-          disabled={currentPage === 1}
-          className="px-4 py-2 bg-blue-600 text-white rounded disabled:bg-gray-400 hover:bg-blue-700 transition"
-        >
-          Previous
-        </button>
-        <span className="text-gray-700">
-          Page <strong>{currentPage}</strong> of {totalPages}
-        </span>
-        <button
-          onClick={handleNextPage}
-          disabled={currentPage === totalPages}
-          className="px-4 py-2 bg-blue-600 text-white rounded disabled:bg-gray-400 hover:bg-blue-700 transition"
-        >
-          Next
-        </button>
-      </div>
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2 mt-8">
+          <button
+            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+            className="px-4 py-2 bg-white rounded-lg border disabled:opacity-50 hover:bg-gray-50"
+          >
+            <i className="ri-arrow-left-s-line"></i>
+          </button>
+          {/* Add page numbers */}
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+            <button
+              key={page}
+              onClick={() => setCurrentPage(page)}
+              className={`px-4 py-2 rounded-lg ${
+                currentPage === page 
+                  ? 'bg-blue-600 text-white' 
+                  : 'bg-white border hover:bg-gray-50'
+              }`}
+            >
+              {page}
+            </button>
+          ))}
+          <button
+            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+            disabled={currentPage === totalPages}
+            className="px-4 py-2 bg-white rounded-lg border disabled:opacity-50 hover:bg-gray-50"
+          >
+            <i className="ri-arrow-right-s-line"></i>
+          </button> 
+        </div>
+      )}
     </div>
   );
 };
+
 export default QuestionList;

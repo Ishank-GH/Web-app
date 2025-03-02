@@ -23,16 +23,19 @@ exports.createAnswer = asyncHandler(async(req, res) => {
 })
 
 exports.voteAnswer = asyncHandler(async(req, res) => {
-
     const answer = await answerModel.findById(req.params.id)
-    const {vote} = req.body;
+
+    if (!answer) {
+      return res.status(404).json({ message: 'Answer not found' });
+    }
+    const { vote } = req.body;
 
     // remove existing votes
     answer.votes.upvotes = answer.votes.upvotes.filter(
-        id => !id.equals(req.user._id)
+        (id) => !id.equals(req.user._id)
     );
     answer.votes.downvotes = answer.votes.downvotes.filter(
-        id => !id.equals(req.user._id)
+        (id) => !id.equals(req.user._id)
     );
 
     // adding votes
@@ -43,25 +46,11 @@ exports.voteAnswer = asyncHandler(async(req, res) => {
         answer.votes.downvotes.push(req.user._id);
     }
 
-    await answer.save()
+    await answer.save();
 
-    res.json(answer)
+    res.json(answer);
+});
 
-})
-
-// exports.getAnswer = asyncHandler(async(req, res) => {
-//     const { sort = "-createdAt"} = req.query
-
-//     const answer = await answerModel.find()
-//     .sort(sort)
-//     .populate('author', 'profile picture')
-//     .populate({
-//         path: "questions",
-//         select: "body createdAt",
-//         option: { limit : 1}
-//     })
-//     res.json(answer);
-// })
 
 exports.updateAnswer = asyncHandler(async(req, res) => {
     const { title, body} = req.body;

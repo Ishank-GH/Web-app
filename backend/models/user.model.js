@@ -5,10 +5,11 @@ const jwt = require('jsonwebtoken');
 const userSchema = new mongoose.Schema(
   {
     username: {
-        type: String,
-        required: true,
-        unique: true,
-        minlength: [3, "Username must be atleast 3 characters long"],
+      type: String,
+      required: true,
+      unique: true,
+      minlength: [3, "Username must be atleast 3 characters long"],
+      trim: true
     },
     email: {
       type: String,
@@ -16,7 +17,7 @@ const userSchema = new mongoose.Schema(
       lowercase: true,
       trim: true,
       unique: true,
-      minlength: [5, "Email must be atleast 3 characters long"],
+      minlength: [5, "Email must be at least 5 characters long"],
       match: [/\S+@\S+\.\S+/, "Please enter a valid email address"],
     },
     password: {
@@ -31,9 +32,17 @@ const userSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Community'
     }],
-    profilePicture: {
+    avatar: {
       type: String,
-      // default: ''
+      default: null
+    },
+    avatarPublicId: {
+      type: String,
+      default: null
+    },
+    color: {
+      type: String,
+      default: null
     },
     // googleId: String,
     // githubId: String,
@@ -62,3 +71,14 @@ userSchema.statics.hashPassword = async function (password) {
 const userModel = mongoose.model("user", userSchema);
 
 module.exports = userModel;
+
+
+
+
+
+
+
+
+
+
+// Invalid Signature d398aef0e7c6434f1398d05cde1a8301cb9f2c48. String to sign - 'folder=avatars&timestamp=1740931333&transformation=c_fill,h_500,w_500'.

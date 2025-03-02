@@ -1,59 +1,60 @@
-const mongoose = require('mongoose')
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
+const mongoose = require("mongoose");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 const userModel = require("../models/user.model");
 const userService = require("../services/user.service");
 const { validationResult } = require("express-validator");
 const blackListTokenModel = require("../models/blacklistToken.model");
-
+const cloudinary = require('cloudinary').v2;
+const { uploadOnCloudinary } = require('../services/upload.service');
 
 module.exports.registerUser = async (req, res, next) => {
   //for atomic operations
   const session = await mongoose.startSession();
   session.startTransaction();
 
-  
-  try{
+  try {
     const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
-
-  const { username, email, password } = req.body;
-
-  const isUserAlreadyRegistered = await userModel.findOne({ email });
-
-  if (isUserAlreadyRegistered) {
-    return res.status(400).json({ message: "User already exists" });
-  }
-
-  const hashedPassword = await userModel.hashPassword(password);
-
-  const user = await userService.createUser({
-    username,
-    email,
-    password: hashedPassword,
-  }, { session });
-
-  const token = user.generateAuthToken();
-
-  await session.commitTransaction();
-  session.endSession();
-
-  res.status(201).json({ 
-    success: true,
-    message: 'User registered',
-    data: {
-      user, 
-      token
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
     }
-   });
 
-  }catch(error){
+    const { username, email, password } = req.body;
+
+    const isUserAlreadyRegistered = await userModel.findOne({ email });
+
+    if (isUserAlreadyRegistered) {
+      return res.status(400).json({ message: "User already exists" });
+    }
+
+    const hashedPassword = await userModel.hashPassword(password);
+
+    const user = await userService.createUser(
+      {
+        username,
+        email,
+        password: hashedPassword,
+      },
+      { session }
+    );
+
+    const token = user.generateAuthToken();
+
+    await session.commitTransaction();
+    session.endSession();
+
+    res.status(201).json({
+      success: true,
+      message: "User registered",
+      data: {
+        user,
+        token,
+      },
+    });
+  } catch (error) {
     await session.abortTransaction();
     session.endSession();
     next(error);
-
   }
 };
 
@@ -88,12 +89,168 @@ module.exports.getUserProfile = async (req, res, next) => {
   res.status(200).json(req.user);
 };
 
+module.exports.updateProfile = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const updates = req.body;
+
+    // Check if username is being updated
+    if (updates.username) {
+      // Check if username already exists (excluding current user)
+      const existingUser = await userModel.findOne({ 
+        username: updates.username,
+        _id: { $ne: userId } // exclude current user
+      });
+
+      if (existingUser) {
+        return res.status(400).json({
+          success: false,
+          message: "Username already exists"
+        });
+      }
+    }
+
+    // Find and update user
+    const updatedUser = await userModel.findByIdAndUpdate(
+      userId,
+      { $set: updates },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: updatedUser,
+      message: "Profile updated successfully"
+    });
+
+  } catch (error) {
+    console.error("Error updating profile:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error updating profile",
+      error: error.message
+    });
+  }
+};
+
+module.exports.addProfileImage = async (req, res, next) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ 
+        success: false,
+        message: "No file uploaded" 
+      });
+    }
+
+    // Log the environment variables (remove in production)
+    console.log('Cloudinary Config:', {
+      cloudName: !!process.env.CLOUDINARY_CLOUD_NAME,
+      apiKey: !!process.env.CLOUDINARY_API_KEY,
+      apiSecret: !!process.env.CLOUDINARY_API_SECRET
+    });
+
+    // Upload to Cloudinary
+    let cloudinaryResponse;
+    try {
+      cloudinaryResponse = await uploadOnCloudinary(req.file.path);
+    } catch (uploadError) {
+      return res.status(500).json({ 
+        success: false,
+        message: "Failed to upload image: " + uploadError.message
+      });
+    }
+
+    if (!cloudinaryResponse) {
+      return res.status(500).json({ 
+        success: false,
+        message: "Failed to get response from cloud storage" 
+      });
+    }
+
+    // Update user in database
+    const updatedUser = await userModel.findByIdAndUpdate(
+      req.user._id,
+      { 
+        avatar: cloudinaryResponse.secure_url,
+        avatarPublicId: cloudinaryResponse.public_id 
+      },
+      { new: true }
+    );
+
+    if (!updatedUser) {
+      // If user update fails, try to delete the uploaded image
+      try {
+        await cloudinary.uploader.destroy(cloudinaryResponse.public_id);
+      } catch (deleteError) {
+        console.error('Failed to delete image after user update failure:', deleteError);
+      }
+
+      return res.status(404).json({ 
+        success: false,
+        message: "User not found" 
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Profile image updated successfully",
+      avatar: updatedUser.avatar
+    });
+
+  } catch (error) {
+    console.error("Upload error:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Error uploading image"
+    });
+  }
+};
+
+module.exports.removeProfileImage = async (req, res, next) => {
+  try {
+    const user = await userModel.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (user.avatarPublicId) {
+      // Delete from Cloudinary
+      await cloudinary.uploader.destroy(user.avatarPublicId);
+    }
+
+    const updatedUser = await userModel.findByIdAndUpdate(
+      req.user._id,
+      { $set: { avatar: null, avatarPublicId: null } },
+      { new: true }
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: 'Profile image removed',
+      data: updatedUser
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      success: false,
+      message: "Error removing profile image"
+    });
+  }
+};
+
 module.exports.logoutUser = async (req, res, next) => {
   res.clearCookie("token");
   const token = req.cookies.token || req.headers.authorization.split(" ")[1];
 
   await blackListTokenModel.create({ token });
 
-  res.status(200).json({ message: "Logged out",
-   });
+  res.status(200).json({ message: "Logged out" });
 };
