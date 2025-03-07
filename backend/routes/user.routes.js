@@ -3,7 +3,7 @@ const router = express.Router();
 const { body } = require('express-validator')
 const userController = require('../controllers/user.controller');
 const authMiddleware = require('../middlewares/auth.middleware')
-const {upload} = require('../middlewares/multer.middleware')
+const upload = require('../middlewares/multer.middleware')
 
 router.post('/register', [
     body('email').isEmail().withMessage('Please enter a valid email address'),

@@ -9,7 +9,7 @@ const cloudinary = require('cloudinary').v2;
 const { uploadOnCloudinary } = require('../services/upload.service');
 
 module.exports.registerUser = async (req, res, next) => {
-  //for atomic operations
+//for atomic operations
   const session = await mongoose.startSession();
   session.startTransaction();
 
@@ -34,6 +34,12 @@ module.exports.registerUser = async (req, res, next) => {
         username,
         email,
         password: hashedPassword,
+        avatar: {
+          type: 'initial',
+          color: 'bg-blue-600 text-white',
+          url: null,
+          publicId: null
+        }
       },
       { session }
     );
@@ -96,10 +102,9 @@ module.exports.updateProfile = async (req, res) => {
 
     // Check if username is being updated
     if (updates.username) {
-      // Check if username already exists (excluding current user)
       const existingUser = await userModel.findOne({ 
         username: updates.username,
-        _id: { $ne: userId } // exclude current user
+        _id: { $ne: userId }
       });
 
       if (existingUser) {
@@ -110,7 +115,18 @@ module.exports.updateProfile = async (req, res) => {
       }
     }
 
-    // Find and update user
+    // If updating avatar color
+    if (updates.avatarColor) {
+      updates.avatar = {
+        ...updates.avatar,
+        type: 'initial',
+        color: updates.avatarColor,
+        url: null,
+        publicId: null
+      };
+      delete updates.avatarColor;
+    }
+
     const updatedUser = await userModel.findByIdAndUpdate(
       userId,
       { $set: updates },
@@ -149,14 +165,6 @@ module.exports.addProfileImage = async (req, res, next) => {
       });
     }
 
-    // Log the environment variables (remove in production)
-    console.log('Cloudinary Config:', {
-      cloudName: !!process.env.CLOUDINARY_CLOUD_NAME,
-      apiKey: !!process.env.CLOUDINARY_API_KEY,
-      apiSecret: !!process.env.CLOUDINARY_API_SECRET
-    });
-
-    // Upload to Cloudinary
     let cloudinaryResponse;
     try {
       cloudinaryResponse = await uploadOnCloudinary(req.file.path);
@@ -174,18 +182,20 @@ module.exports.addProfileImage = async (req, res, next) => {
       });
     }
 
-    // Update user in database
     const updatedUser = await userModel.findByIdAndUpdate(
       req.user._id,
       { 
-        avatar: cloudinaryResponse.secure_url,
-        avatarPublicId: cloudinaryResponse.public_id 
+        avatar: {
+          type: 'image',
+          url: cloudinaryResponse.secure_url,
+          publicId: cloudinaryResponse.public_id,
+          color: null
+        }
       },
       { new: true }
     );
 
     if (!updatedUser) {
-      // If user update fails, try to delete the uploaded image
       try {
         await cloudinary.uploader.destroy(cloudinaryResponse.public_id);
       } catch (deleteError) {
@@ -221,14 +231,20 @@ module.exports.removeProfileImage = async (req, res, next) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    if (user.avatarPublicId) {
-      // Delete from Cloudinary
-      await cloudinary.uploader.destroy(user.avatarPublicId);
+    if (user.avatar.publicId) {
+      await cloudinary.uploader.destroy(user.avatar.publicId);
     }
 
     const updatedUser = await userModel.findByIdAndUpdate(
       req.user._id,
-      { $set: { avatar: null, avatarPublicId: null } },
+      { 
+        avatar: {
+          type: 'initial',
+          color: 'bg-blue-600 text-white',
+          url: null,
+          publicId: null
+        }
+      },
       { new: true }
     );
 

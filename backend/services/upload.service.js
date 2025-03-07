@@ -4,7 +4,8 @@ const fs = require('fs');
 cloudinary.config({ 
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME, 
     api_key: process.env.CLOUDINARY_API_KEY, 
-    api_secret: process.env.CLOUDINARY_API_SECRET
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+    secure: true
 });
 
 const uploadOnCloudinary = async (localFilePath) => {
@@ -14,7 +15,12 @@ const uploadOnCloudinary = async (localFilePath) => {
         // Upload file on cloudinary
         const response = await cloudinary.uploader.upload(localFilePath, {
             resource_type: 'auto',
-            folder: 'avatars' // Optional: organize images in a folder
+            folder: 'avatars',
+            transformation: [
+                {width: 500, height: 500, crop: "limit"}, // Resize before upload
+                {quality: "auto:good"} // Optimize quality
+            ],
+            eager_async: true // Enable async transformations
         });
 
         // File has been uploaded successfully

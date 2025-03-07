@@ -1,17 +1,17 @@
-import React from 'react';
-import { Link, Outlet } from 'react-router-dom';
-import UserLogout from './UserLogout';
-import ProfileDropdown from './ProfileDropdown';
+import React from "react";
+import { Link, Outlet } from "react-router-dom";
+import UserLogout from "./UserLogout";
+import ProfileDropdown from "./ProfileDropdown";
 
 const MasterLayout = ({ children }) => {
   return (
     <div className="min-h-screen bg-gray-100">
       {/* Navigation / Top Bar */}
       <nav className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-1">
           <div className="flex items-center justify-between h-16">
-            <div className="flex items-center">
-              <h1 className="text-2xl font-bold text-blue-600">Comm</h1>
+            <div className="flex items-center ml-2">
+              <img src="../public/Symmunity_Logo.jpg" alt="" className="w-48" />
               <div className="ml-6 flex items-center bg-gray-100 rounded-lg px-4 py-2">
                 <input
                   type="text"
@@ -20,7 +20,7 @@ const MasterLayout = ({ children }) => {
                 />
               </div>
             </div>
-            <div className="flex items-center space-x-10">
+            <div className="flex items-center space-x-5">
               <ProfileDropdown />
               <UserLogout />
             </div>
@@ -28,35 +28,55 @@ const MasterLayout = ({ children }) => {
         </div>
       </nav>
 
-      <div className="max-w-9xl mx-auto px-4 sm:px-4 lg:px-5 py-8 flex gap-6">
+      <div className="max-w-9xl mx-auto px-4 sm:px-4 lg:px-5 py-6 flex gap-6">
         {/* Sidebar */}
-        <div className="w-1/5 space-y-4">
-          <div className="bg-white p-4 rounded-lg shadow-sm">
-            <div className="space-y-2">
-              {["Home", "Profile", "Direct Messages", "Questions"].map((elem, index) => (
-                <Link
-                  key={index}
-                  to={`/${elem.toLocaleLowerCase().replace(/\s+/g, '-')}`}
-                  className="flex items-center p-2 hover:bg-gray-50 rounded cursor-pointer"
-                >
-                  <div className="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center mr-2">
-                    {elem[0]}
-                  </div>
-                  <span className="ml-2">{elem}</span>
-                </Link>
-              ))}
+        <div className="w-1/6 space-y-4">
+          <div className="bg-white p-2 rounded-lg shadow-sm">
+            <div className="flex flex-col space-y-2">
+              <Link
+                to="/"
+                className="flex items-center space-x-4 p-2 hover:bg-gray-50 rounded cursor-pointer"
+              >
+                <div className="h-10 w-10 flex items-center justify-center text-gray-700 bg-gray-50 rounded-lg">
+                  <i className="ri-home-5-fill text-2xl"></i>
+                </div>
+                <span className="text-sm font-medium">Home</span>
+              </Link>
+
+              <Link
+                to="/direct-messages"
+                className="flex items-center space-x-4 p-2 hover:bg-gray-50 rounded cursor-pointer"
+              >
+                <div className="h-10 w-10 flex items-center justify-center text-gray-700 bg-gray-50 rounded-lg">
+                  <i className="ri-message-3-fill text-2xl"></i>
+                </div>
+                <span className="text-sm font-medium">Messages</span>
+              </Link>
+
+              <Link
+                to="/questions"
+                className="flex items-center space-x-4 p-2 hover:bg-gray-50 rounded cursor-pointer"
+              >
+                <div className="h-10 w-10 flex items-center justify-center text-gray-700 bg-gray-50 rounded-lg">
+                  <i className="ri-question-answer-fill text-2xl"></i>
+                </div>
+                <span className="text-sm font-medium">Questions</span>
+              </Link>
             </div>
           </div>
 
           <hr className="w-full h-4 border-none bg-blue-600 py-2 rounded-lg hover:bg-blue-700 transition-colors" />
 
           <div className="bg-white p-4 rounded-lg shadow-sm">
-            <h2 className="text-lg font-semibold mb-4">Your Communities</h2>
+            <h2 className="text-lg font-semibold mb-4 items-center justify-center">
+            
+              Your Communities
+            </h2>
             <div className="space-y-2">
               {["Web Dev", "UX Design", "Tech News"].map((community) => (
                 <div
                   key={community}
-                  className="flex items-center p-2 hover:bg-gray-50 rounded cursor-pointer"
+                  className="flex items-center px-1 py-2 hover:bg-gray-50 rounded cursor-pointer"
                 >
                   <div className="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center mr-2">
                     {community[0]}

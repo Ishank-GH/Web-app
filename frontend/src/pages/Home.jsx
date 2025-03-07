@@ -5,6 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 const Home = () => {
   const [trendingTags, setTrendingTags] = useState(['react', 'javascript', 'node.js', 'python', 'mongodb']);
   const [trendingQuestions, setTrendingQuestions] = useState([])
+  const [isMessageOpen, setIsMessageOpen] = useState(false)
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -29,18 +30,18 @@ const Home = () => {
     };
 
     // Add tags based on questions
-    const extractTags = (questions) => {
-      const tagMap = {};
-      questions.forEach(q => {
-        q.tags?.forEach(tag => {
-          tagMap[tag] = (tagMap[tag] || 0) + 1;
-        });
-      });
-      return Object.entries(tagMap)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 5)
-        .map(([tag]) => tag);
-    };
+    // const extractTags = (questions) => {
+    //   const tagMap = {};
+    //   questions.forEach(q => {
+    //     q.tags?.forEach(tag => {
+    //       tagMap[tag] = (tagMap[tag] || 0) + 1;
+    //     });
+    //   });
+    //   return Object.entries(tagMap)
+    //     .sort((a, b) => b[1] - a[1])
+    //     .slice(0, 5)
+    //     .map(([tag]) => tag);
+    // };
 
     fetchTrendingQuestions().then(() => {
       setTrendingTags(extractTags(trendingQuestions));
@@ -63,20 +64,20 @@ const Home = () => {
         >
           <i className="ri-message-line text-xl"></i>
         </button>
-      </div> */}
+      </div>  */}
 
       {/* Messages Panel */}
-      {/* <div className={`fixed top-0 left-16 h-full bg-white shadow-lg transition-all duration-300 overflow-hidden ${
+       {/* <div className={`fixed top-0 left-16 h-full bg-white shadow-lg transition-all duration-300 overflow-hidden ${
         isMessageOpen ? 'w-72' : 'w-0'
       }`}>
         <div className="p-4">
-          <h3 className="text-lg font-semibold mb-4">Messages</h3> */}
+          <h3 className="text-lg font-semibold mb-4">Messages</h3>  */}
           {/* Add message content here */}
         {/* </div>
       </div> */}
 
       {/* Main Content */}
-      <div className={`flex-1 transition-all duration-300`}>
+      <div className='flex-1 transition-all duration-300'>
         <div className="max-w-7xl mx-auto p-6">
           <div className="grid grid-cols-12 gap-6">
             {/* Questions Section */}
@@ -90,8 +91,17 @@ const Home = () => {
                   {trendingQuestions.map((question) => (
                     <div key={question._id} className="p-4 border rounded-xl hover:shadow-md transition-shadow">
                       <div className="flex items-center mb-3">
-                        <img src={question.author.avatar} 
-                             className="h-10 w-10 rounded-full mr-3" />
+                        {question.author?.avatar?.type === 'image' ? (
+                          <img
+                            src={question.author.avatar.url}
+                            alt={question.author.username}
+                            className="h-10 w-10 rounded-full mr-3"
+                          />
+                        ) : (
+                          <div className={`h-10 w-10 rounded-full flex items-center justify-center ${question.author?.avatar?.color || 'bg-blue-600 text-white'} mr-3`}>
+                            {question.author.username.slice(0, 2).toUpperCase()}
+                          </div>
+                        )}
                         <div>
                           <h3 className="font-semibold">{question.author.username}</h3>
                           <p className="text-sm text-gray-500">{new Date(question.createdAt).toLocaleDateString()}</p>
@@ -141,7 +151,7 @@ const Home = () => {
               {/* Ask Question Card */}
               <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl shadow-sm p-4">
                 <h3 className="text-base font-semibold mb-2">Share Knowledge</h3>
-                <p className="text-sm text-gray-600 mb-3">Help others by answering questions</p>
+                <p className="text-sm text-gray-600 mb-3">Either by asking questions or answering others</p>
                 <Link 
                   to="/questions/create"
                   className="block text-center bg-blue-600 text-white text-sm px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"

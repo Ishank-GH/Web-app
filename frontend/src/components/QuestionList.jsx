@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
 import formatDate from "../helper/Date";
@@ -10,6 +10,9 @@ const QuestionList = () => {
   const [sortBy, setSortBy] = useState("newest");
   const [filter, setFilter] = useState("");
   const questionsPerPage = 10;
+
+  // Add useRef for scroll functionality
+  const questionsRef = useRef(null);
 
   useEffect(() => {
     const fetchQuestions = async () => {
@@ -45,12 +48,19 @@ const QuestionList = () => {
 
   const totalPages = Math.ceil(filteredAndSortedQuestions.length / questionsPerPage);
 
+  // Modify page change handlers
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+    // Scroll to top of questions
+    questionsRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   console.log(questions)
 
   return (
     <div className="max-w-7xl mx-auto">
       {/* Header */}
-      <div className="bg-white rounded-xl shadow-sm p-6 mb-4">
+      <div ref={questionsRef} className="bg-white rounded-xl shadow-sm p-6 mb-4">
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
           <div>
             <h1 className="text-2xl font-bold text-gray-800">All Questions</h1>
@@ -128,11 +138,17 @@ const QuestionList = () => {
 
                   <div className="mt-4 flex justify-end text-sm text-gray-500">
                     <div className="flex items-center">
-                      <img
-                        src={`${question.author.avatar}`}
-                        alt={question.author.username}
-                        className="w-6 h-6 rounded-full mr-2"
-                      />
+                      {question.author?.avatar?.type === 'image' ? (
+                        <img
+                          src={question.author.avatar.url}
+                          alt={question.author.username}
+                          className="w-6 h-6 rounded-full mr-2"
+                        />
+                      ) : (
+                        <div className={`w-6 h-6 rounded-full flex items-center justify-center ${question.author?.avatar?.color || 'bg-blue-600 text-white'} mr-2`}>
+                          {question.author.username.slice(0, 2).toUpperCase()}
+                        </div>
+                      )}
                       <span>Asked by {question.author.username}</span>
                       <span className="mx-2">•</span>
                       <span>{formatDate(question.createdAt)}</span>
@@ -154,7 +170,7 @@ const QuestionList = () => {
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-2 mt-8">
           <button
-            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+            onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
             disabled={currentPage === 1}
             className="px-4 py-2 bg-white rounded-lg border disabled:opacity-50 hover:bg-gray-50"
           >
@@ -164,7 +180,7 @@ const QuestionList = () => {
           {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
             <button
               key={page}
-              onClick={() => setCurrentPage(page)}
+              onClick={() => handlePageChange(page)}
               className={`px-4 py-2 rounded-lg ${
                 currentPage === page 
                   ? 'bg-blue-600 text-white' 
@@ -175,7 +191,7 @@ const QuestionList = () => {
             </button>
           ))}
           <button
-            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+            onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
             disabled={currentPage === totalPages}
             className="px-4 py-2 bg-white rounded-lg border disabled:opacity-50 hover:bg-gray-50"
           >

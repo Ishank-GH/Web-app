@@ -1,5 +1,6 @@
 const questionModel = require('../models/question.model');
 const asyncHandler = require('../middlewares/asyncHandler.middleware')
+const { uploadOnCloudinary } = require('../services/upload.service');
 
 exports.createQuestion = asyncHandler(async(req, res) => {
         const { title, body} = req.body;
@@ -79,45 +80,56 @@ exports.voteQuestion = asyncHandler(async(req, res) => {
 
 })
 
-exports.updateQuestion = asyncHandler(async(req, res) => {
-    const { title, body} = req.body;
-    
-    const question = await questionModel.findById(req.params.id)
+exports.updateQuestion = asyncHandler(async (req, res) => {
+  const { title, body } = req.body;
+  const question = await questionModel.findById(req.params.id);
 
-    if(!question){
-        return res.status(404).json({message: 'Question not found'})
-    }
+  if (!question) {
+    return res.status(404).json({ message: 'Question not found' });
+  }
 
-    if(!question.author.equals(req.user._id)){
-        const err = new Error('Only the author can edit the question')
-        err.statusCode = 403;
-        throw err;
-    }
+  if (!question.author.equals(req.user._id)) {
+    return res.status(403).json({ message: 'Only the author can edit the question' });
+  }
 
-    question.title = title || question.title;
-    question.body = body || question.body;
-    await question.save();
+  // Handle image uploads
+  let imageUrls = [];
+  if (req.files && req.files.length > 0) {
+    const uploadPromises = req.files.map(file => uploadOnCloudinary(file.path));
+    const uploadedImages = await Promise.all(uploadPromises);
+    imageUrls = uploadedImages.map(img => ({
+      url: img.secure_url,
+      publicId: img.public_id
+    }));
+  }
 
-    res.status(200).json({
-        success: true,
-        message: 'Question updated',
-        data: question
-    })
-})
+  question.title = title || question.title;
+  question.body = body || question.body;
+  question.images = [...question.images, ...imageUrls];
+  await question.save();
 
-exports.deleteQuestion = asyncHandler(async(req, res) => {
-    const question = await questionModel.findById(req.params.id)
+  res.status(200).json({
+    success: true,
+    message: 'Question updated',
+    data: question
+  });
+});
 
-    if(!question.author.equals(req.user._id)){
-        const err = new Error('Only author can delete the question')
-        err.statusCode = 403;
-        throw err;
-    }
+exports.deleteQuestion = asyncHandler(async (req, res) => {
+  const question = await questionModel.findById(req.params.id);
 
-    await question.deleteOne();
+  if (!question.author.equals(req.user._id)) {
+    return res.status(403).json({ message: 'Only the author can delete the question' });
+  }
 
-    res.status(200).json({
-        success: true,
-        message: 'Question deleted',
-    })
-})
+  // Delete images from Cloudinary
+  const deletePromises = question.images.map(img => cloudinary.uploader.destroy(img.publicId));
+  await Promise.all(deletePromises);
+
+  await question.deleteOne();
+
+  res.status(200).json({
+    success: true,
+    message: 'Question deleted',
+  });
+});

@@ -10,6 +10,7 @@ import QuestionList from "./components/QuestionList";
 import AskQuestion from "./components/AskQuestion";
 import QuestionDetail from "./components/QuestionDetail";
 import MasterLayout from "./pages/MasterLayout";
+import DirectMessages from "./pages/DirectMessages";
 
 const App = () => {
   return (
@@ -56,6 +57,14 @@ const App = () => {
             element={
               <UserProtectedWrapper>
                 <QuestionDetail />
+              </UserProtectedWrapper>
+            }
+          />
+          <Route
+            path="/direct-messages"
+            element={
+              <UserProtectedWrapper>
+                <DirectMessages />
               </UserProtectedWrapper>
             }
           />
