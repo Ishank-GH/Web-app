@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
-import formatDate from "../helper/Date";
+import moment from 'moment';
 
 const QuestionList = () => {
   const [questions, setQuestions] = useState([]);
@@ -37,7 +37,7 @@ const QuestionList = () => {
         case "votes": return b.voteCount - a.voteCount;
         case "answers": return b.answers.length - a.answers.length;
         case "views": return b.viewCount - a.viewCount;
-        default: return new Date(b.createdAt) - new Date(a.createdAt);
+        default: return moment(b.createdAt).valueOf() - moment(a.createdAt).valueOf();
       }
     });
 
@@ -54,8 +54,6 @@ const QuestionList = () => {
     // Scroll to top of questions
     questionsRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
-
-  console.log(questions)
 
   return (
     <div className="max-w-7xl mx-auto">
@@ -151,7 +149,7 @@ const QuestionList = () => {
                       )}
                       <span>Asked by {question.author.username}</span>
                       <span className="mx-2">•</span>
-                      <span>{formatDate(question.createdAt)}</span>
+                      <span>{moment(question.createdAt).fromNow()}</span>
                     </div>
                   </div>
                 </div>

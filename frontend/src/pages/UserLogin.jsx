@@ -1,38 +1,24 @@
-import React, { useState, useContext } from 'react'
+import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import axios from 'axios'
-import {UserDataContext} from '../context/UserContext'
-
+import { useUser } from '../context/UserContext'
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const UserLogin = () => {
-  const [ email, setEmail ] = useState('')
-  const [ password, setPassword ] = useState('')
-  const [ userData, setUserData ] = useState({})
-  const navigate = useNavigate()
-
-  const { user, setUser } = useContext(UserDataContext)
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const navigate = useNavigate();
+  const { login } = useUser();
 
   const submitHandler = async (e) => {
     e.preventDefault();
-
-    const userData = {
-      email: email,
-      password: password
+    const result = await login(email, password);
+    if (result.success) {
+      navigate('/');
+    } else {
+      toast.error(result.error);
     }
-
-    const response = await axios.post(`${import.meta.env.VITE_BASE_URL}/users/login`, userData)
-    
-    if(response.status === 200){
-      const data = response.data
-      setUser(data.user)// setting email and username in context
-      localStorage.setItem('token', data.token)
-      navigate('/')
-    }
-    setEmail('')
-    setPassword('')
-  } 
-
-
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">

@@ -4,24 +4,38 @@ const questionModel = require('../models/question.model')
 const { uploadOnCloudinary } = require('../services/upload.service');
 
 exports.createAnswer = asyncHandler(async(req, res) => {
-    const { body} = req.body;
+    const { body } = req.body;
+
+    // Handle image uploads
+    let imageUrls = [];
+    if (req.files && req.files.length > 0) {
+        const uploadPromises = req.files.map(file => uploadOnCloudinary(file.path));
+        const uploadedImages = await Promise.all(uploadPromises);
+        imageUrls = uploadedImages.map(img => ({
+            url: img.secure_url,
+            publicId: img.public_id
+        }));
+    }
 
     const answer = await answerModel.create({
         body,
         author: req.user._id,
-        question: req.params.questionId
-    })
-
+        question: req.params.questionId,
+        images: imageUrls
+    });
 
     const question = await questionModel.findById(req.params.questionId).populate('answers');
-    question.answers.push(answer._id, answer.author)
+    question.answers.push(answer._id);
     await question.save();
+
+    // Populate author details before sending response
+    await answer.populate('author', 'username avatar');
 
     res.status(201).json({
         success: true,
         data: answer
-    })
-})
+    });
+});
 
 exports.voteAnswer = asyncHandler(async(req, res) => {
     const answer = await answerModel.findById(req.params.id)

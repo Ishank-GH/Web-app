@@ -1,47 +1,26 @@
-import React, { useContext, useEffect, useState } from 'react'
+import React, { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { UserDataContext } from '../context/UserContext'
-import axios from 'axios'
+import { useUser } from '../context/UserContext'
 
-const UserProtectedWrapper = ({children}) => {
+const UserProtectedWrapper = ({ children }) => {
+  const { loading, isAuthenticated } = useUser();
+  const navigate = useNavigate();
 
-    const token = localStorage.getItem('token')
-    const navigate = useNavigate()
-    const { user, setUser } = useContext(UserDataContext)
-    const [ isLoading, setIsLoading ] = useState(true);
+  useEffect(() => {
+    if (!loading && !isAuthenticated) {
+      navigate('/login');
+    }
+  }, [loading, isAuthenticated, navigate]);
 
-    useEffect(() => {
-      if (!token) {
-          navigate('/login')
-      }
-
-      axios.get(`${import.meta.env.VITE_BASE_URL}/users/profile`, {
-          headers: {
-              Authorization: `Bearer ${token}`
-          }
-      }).then(response => {
-          if (response.status === 200) {
-              setUser(response.data.user)
-              setIsLoading(false)
-          }
-      })
-          .catch(err => {
-              console.log(err)
-              localStorage.removeItem('token')
-              navigate('/login')
-          })
-  }, [ token ])
-
-  if (isLoading) {
-      return (
-          <div>Loading...</div>
-      )
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
   }
-  return (
-    <>
-    {children}
-    </>
-  )
-}
+
+  return isAuthenticated ? children : null;
+};
 
 export default UserProtectedWrapper

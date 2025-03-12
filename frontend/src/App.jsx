@@ -11,66 +11,75 @@ import AskQuestion from "./components/AskQuestion";
 import QuestionDetail from "./components/QuestionDetail";
 import MasterLayout from "./pages/MasterLayout";
 import DirectMessages from "./pages/DirectMessages";
+import { SocketProvider } from './context/SocketContext.jsx';
+import UserContext from "./context/UserContext";
+import Communities from './pages/Communities';
+import CommunityDetails from './pages/CommunityDetails';
+
 
 const App = () => {
   return (
-    <div>
-      <Routes>
-      <Route path="/login" element={<UserLogin />} />
-      <Route path="/signup" element={<UserSignup />} />
-        <Route element={<MasterLayout />}>
-          
-          <Route
-            path="/"
-            element={
-              <UserProtectedWrapper>
-                <Home />
-              </UserProtectedWrapper>
-            }
-          />
-          <Route
-            path="/logout"
-            element={
-              <UserProtectedWrapper>
-                <UserLogout />
-              </UserProtectedWrapper>
-            }
-          />
-          <Route
-            path="/questions"
-            element={
-              <UserProtectedWrapper>
-                <QuestionList />
-              </UserProtectedWrapper>
-            }
-          />
-          <Route
-            path="/questions/create"
-            element={
-              <UserProtectedWrapper>
-                <AskQuestion />
-              </UserProtectedWrapper>
-            }
-          />
-          <Route
-            path="/questions/:questionId"
-            element={
-              <UserProtectedWrapper>
-                <QuestionDetail />
-              </UserProtectedWrapper>
-            }
-          />
-          <Route
-            path="/direct-messages"
-            element={
-              <UserProtectedWrapper>
-                <DirectMessages />
-              </UserProtectedWrapper>
-            }
-          />
-        </Route>
-      </Routes>
-    </div>
+    <UserContext>
+      <SocketProvider>
+        <Routes>
+          <Route path="/login" element={<UserLogin />} />
+          <Route path="/signup" element={<UserSignup />} />
+          <Route element={<MasterLayout />}>
+            <Route
+              path="/"
+              element={
+                <UserProtectedWrapper>
+                  <Home />
+                </UserProtectedWrapper>
+              }
+            />
+            <Route
+              path="/logout"
+              element={
+                <UserProtectedWrapper>
+                  <UserLogout />
+                </UserProtectedWrapper>
+              }
+            />
+            <Route
+              path="/questions"
+              element={
+                <UserProtectedWrapper>
+                  <QuestionList />
+                </UserProtectedWrapper>
+              }
+            />
+            <Route
+              path="/questions/create"
+              element={
+                <UserProtectedWrapper>
+                  <AskQuestion />
+                </UserProtectedWrapper>
+              }
+            />
+            <Route
+              path="/questions/:questionId"
+              element={
+                <UserProtectedWrapper>
+                  <QuestionDetail />
+                </UserProtectedWrapper>
+              }
+            />
+            <Route
+              path="/direct-messages"
+              element={
+                <UserProtectedWrapper>
+                  <DirectMessages />
+                </UserProtectedWrapper>
+              }
+            />
+            <Route path="/communities" element={<Communities />} />
+            <Route path="/communities/:communityId" element={<CommunityDetails />} />
+            <Route path="/communities/:id" element={<CommunityDetails />} />
+          </Route>
+        </Routes>
+      </SocketProvider>
+    </UserContext>
   );
 };
 

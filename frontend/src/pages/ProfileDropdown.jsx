@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { ToastContainer, toast } from 'react-toastify';
 import axios from "axios";
+import { useUser } from '../context/UserContext';
 
 const ProfileDropdown = () => {
   const defaultAvatar = {
@@ -65,33 +66,23 @@ const ProfileDropdown = () => {
     setIsOpen(!isOpen);
   };
 
+  const { user, updateProfile } = useUser();
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
-    try {
-      const response = await axios.put(
-        `${import.meta.env.VITE_BASE_URL}/users/update-profile/${userInfo._id}`,
-        {
-          username: tempUsername,
-          avatar: {
-            ...userInfo.avatar,
-            color: tempColor
-          }
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`
-          }
-        }
-      );
-
-      if (response.data.success) {
-        setUserInfo(response.data.data);
-        toast.success(response.data.message);
-        setIsOpen(false);
+    const result = await updateProfile({
+      username: tempUsername,
+      avatar: {
+        ...user.avatar,
+        color: tempColor
       }
-    } catch (err) {
-      console.error(err);
-      toast.error(err.response?.data?.message || "Failed to update profile");
+    });
+
+    if (result.success) {
+      toast.success('Profile updated successfully');
+      setIsOpen(false);
+    } else {
+      toast.error(result.error);
     }
   };
 

@@ -3,19 +3,34 @@ const asyncHandler = require('../middlewares/asyncHandler.middleware')
 const { uploadOnCloudinary } = require('../services/upload.service');
 
 exports.createQuestion = asyncHandler(async(req, res) => {
-        const { title, body} = req.body;
+    const { title, body } = req.body;
 
-        const question = await questionModel.create({
-            title,
-            body,
-            author: req.user._id
-        })
+    // Handle image uploads
+    let imageUrls = [];
+    if (req.files && req.files.length > 0) {
+        const uploadPromises = req.files.map(file => uploadOnCloudinary(file.path));
+        const uploadedImages = await Promise.all(uploadPromises);
+        imageUrls = uploadedImages.map(img => ({
+            url: img.secure_url,
+            publicId: img.public_id
+        }));
+    }
 
-        res.status(201).json({
-            success: true,
-            data: question
-        })
-})
+    const question = await questionModel.create({
+        title,
+        body,
+        author: req.user._id,
+        images: imageUrls
+    });
+
+    // Populate author details before sending response
+    await question.populate('author', 'username avatar');
+
+    res.status(201).json({
+        success: true,
+        data: question
+    });
+});
 
 exports.getQuestion = asyncHandler(async(req, res) => {
     const question = await questionModel.findByIdAndUpdate(req.params.id,

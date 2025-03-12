@@ -6,31 +6,37 @@ import ReactMarkdown from 'react-markdown';
 const AskQuestion = () => {
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
-  const [tags, setTags] = useState([]);
-  const [currentTag, setCurrentTag] = useState("");
   const [isPreview, setIsPreview] = useState(false);
+  const [images, setImages] = useState([]);
+  const [imageFiles, setImageFiles] = useState([]);
   const navigate = useNavigate();
 
-  const handleTagAdd = (e) => {
-    e.preventDefault();
-    if (currentTag && !tags.includes(currentTag) && tags.length < 5) {
-      setTags([...tags, currentTag.toLowerCase()]);
-      setCurrentTag("");
-    }
-  };
-
-  const removeTag = (tagToRemove) => {
-    setTags(tags.filter(tag => tag !== tagToRemove));
+  const handleImageSelect = (e) => {
+    const files = Array.from(e.target.files);
+    setImageFiles(files);
+    
+    // Create preview URLs
+    const previews = files.map(file => URL.createObjectURL(file));
+    setImages(previews);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const formData = new FormData();
+      formData.append('title', title);
+      formData.append('body', body);
+      
+      imageFiles.forEach(file => {
+        formData.append('images', file);
+      });
+
       await axios.post(
         `${import.meta.env.VITE_BASE_URL}/questions/create`,
-        { title, body, tags },
+        formData,
         {
           headers: {
+            'Content-Type': 'multipart/form-data',
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
         }
@@ -43,6 +49,13 @@ const AskQuestion = () => {
 
   return (
     <div className="max-w-3xl mx-auto p-6">
+      <button 
+        onClick={() => navigate(-1)} 
+        className="mb-4 flex items-center text-gray-600 hover:text-gray-800"
+      >
+        <i className="ri-arrow-left-line mr-2"></i>
+        Go Back
+      </button>
       <div className="bg-white rounded-xl shadow-sm">
         <div className="p-6 border-b">
           <h1 className="text-2xl font-bold text-gray-900">Ask a Question</h1>
@@ -95,49 +108,41 @@ const AskQuestion = () => {
             )}
           </div>
 
-          {/* Tags field */}
+          {/* Image upload */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Tags
+              Add Images (optional)
             </label>
-            <div className="flex items-center space-x-2">
-              <input
-                type="text"
-                value={currentTag}
-                onChange={(e) => setCurrentTag(e.target.value)}
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Add up to 5 tags..."
-              />
-              <button
-                type="button"
-                onClick={handleTagAdd}
-                className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
-                disabled={tags.length >= 5}
-              >
-                Add Tag
-              </button>
-            </div>
-            <div className="flex flex-wrap gap-2 mt-2">
-              {tags.map((tag, index) => (
-                <span
-                  key={index}
-                  className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full flex items-center"
-                >
-                  {tag}
-                  <button
-                    type="button"
-                    onClick={() => removeTag(tag)}
-                    className="ml-2 text-blue-600 hover:text-blue-800"
-                  >
-                    ×
-                  </button>
-                </span>
-              ))}
-            </div>
-            {tags.length >= 5 && (
-              <p className="text-sm text-orange-600 mt-1">
-                Maximum of 5 tags reached
-              </p>
+            <input
+              type="file"
+              multiple
+              accept="image/*"
+              onChange={handleImageSelect}
+              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+            
+            {images.length > 0 && (
+              <div className="grid grid-cols-3 gap-2 mt-2">
+                {images.map((preview, index) => (
+                  <div key={index} className="relative">
+                    <img
+                      src={preview}
+                      alt={`Preview ${index + 1}`}
+                      className="w-full h-32 object-cover rounded-lg"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setImages(images.filter((_, i) => i !== index));
+                        setImageFiles(imageFiles.filter((_, i) => i !== index));
+                      }}
+                      className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
 

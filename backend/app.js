@@ -11,6 +11,10 @@ const userRoutes = require('./routes/user.routes')
 const questionRoutes = require('./routes/question.routes')
 const answerRoutes = require('./routes/answer.routes')
 const contactsRoutes = require('./routes/contacts.routes')
+const messageRoutes = require('./routes/message.routes')
+const communityRoutes = require('./routes/community.routes');
+const channelRoutes = require('./routes/channel.routes');
+
 
 app.use(cookieParser())
 app.use(express.json())
@@ -22,6 +26,9 @@ app.use('/users', userRoutes )
 app.use('/questions', questionRoutes)
 app.use('/questions', answerRoutes)
 app.use('/contacts', contactsRoutes)
+app.use('/messages', messageRoutes)
+app.use('/communities', communityRoutes);
+app.use('/channels', channelRoutes);
 
 app.use(errorMiddleware)
 

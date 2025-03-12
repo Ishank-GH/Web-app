@@ -7,6 +7,10 @@ const answerSchema = new mongoose.Schema(
       required: true,
       maxlength: [2000, "Max length is 2000"],
     },
+    images: [{
+      url: String,
+      publicId: String
+    }],
     author: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "user",

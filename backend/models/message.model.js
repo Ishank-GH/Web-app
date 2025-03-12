@@ -4,14 +4,12 @@ const messageSchema = new mongoose.Schema({
     sender: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'user',
-        required: true,
-        index: true
+        required: true
     },
     recipient: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'user',
-        required: true,
-        index: true
+        required: true
     },
     messageType: {
         type: String,
@@ -20,10 +18,9 @@ const messageSchema = new mongoose.Schema({
     },
     content: {
         type: String,
-        required: function() {
-            return this.messageType === 'text';
-        },
-        trim: true
+        required: function(){
+            return this.messageType === 'text'
+        }
     },
     fileUrl: {
         type: String,
@@ -33,16 +30,17 @@ const messageSchema = new mongoose.Schema({
     },
     timestamp: {
         type: Date,
-        default: Date.now,
-        index: true
+        default: Date.now
     },
     read: {
         type: Boolean,
         default: false
     }
-}, {
-    timestamps: true
-});
+}, { 
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true }
+  });
 
 // Add indexes for common queries
 messageSchema.index({ sender: 1, recipient: 1, timestamp: -1 });

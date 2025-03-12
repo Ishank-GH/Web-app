@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useParams } from 'react-router-dom';
-import formatDate from '../helper/Date';
 import ReactMarkdown from 'react-markdown';
 import { useNavigate } from 'react-router-dom';
+import moment from 'moment';
 
 const QuestionDetail = () => {
   const { questionId } = useParams();
@@ -124,6 +124,13 @@ const QuestionDetail = () => {
 
   return (
     <div className="max-w-7xl mx-auto p-6">
+      <button 
+        onClick={() => navigate(-1)} 
+        className="mb-4 flex items-center text-gray-600 hover:text-gray-800"
+      >
+        <i className="ri-arrow-left-line mr-2"></i>
+        Go Back
+      </button>
       {question ? (
         <div className="bg-white rounded-xl shadow-sm p-6">
           {/* Question Header */}
@@ -151,6 +158,18 @@ const QuestionDetail = () => {
                 <h1 className="text-3xl font-bold text-gray-900 mb-4">{question.title}</h1>
                 <div className="prose prose-lg max-w-none mb-6">
                   <ReactMarkdown>{question.body}</ReactMarkdown>
+                  {question.images && question.images.length > 0 && (
+                    <div className="grid grid-cols-2 gap-4 mt-4">
+                      {question.images.map((image, index) => (
+                        <img
+                          key={index}
+                          src={image.url}
+                          alt={`Question image ${index + 1}`}
+                          className="rounded-lg max-h-96 object-contain"
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
                 
                 {/* for tags */}
@@ -177,7 +196,7 @@ const QuestionDetail = () => {
                     )}
                     <div>
                       <div className="font-semibold">{question.author.username}</div>
-                      <div className="text-gray-500">Asked {formatDate(question.createdAt)}</div>
+                      <div className="text-gray-500">Asked {moment(question.createdAt).fromNow()}</div>
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
@@ -228,6 +247,18 @@ const QuestionDetail = () => {
                     <div className="flex-1">
                       <div className="prose max-w-none mb-4">
                         <ReactMarkdown>{answer.body}</ReactMarkdown>
+                        {answer.images && answer.images.length > 0 && (
+                          <div className="grid grid-cols-2 gap-4 mt-4">
+                            {answer.images.map((image, index) => (
+                              <img
+                                key={index}
+                                src={image.url}
+                                alt={`Answer image ${index + 1}`}
+                                className="rounded-lg max-h-96 object-contain"
+                              />
+                            ))}
+                          </div>
+                        )}
                       </div>
                       <div className="flex justify-end items-center text-sm text-gray-500">
                         {answer.author?.avatar?.type === 'image' ? (
@@ -243,7 +274,7 @@ const QuestionDetail = () => {
                         )}
                         <span>Answered by {answer.author.username}</span>
                         <span className="mx-2">•</span>
-                        <span>{formatDate(answer.createdAt)}</span>
+                        <span>{moment(answer.createdAt).fromNow()}</span>
                       </div>
                     </div>
                   </div>

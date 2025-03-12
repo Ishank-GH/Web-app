@@ -7,6 +7,10 @@ const questionSchema = new mongoose.Schema({
         trim: true,
         maxlength: [250, 'Max length is 250 characters']
     },
+    images: [{
+        url: String,
+        publicId: String
+    }],
     body: {
         type: String,
         required: true,
