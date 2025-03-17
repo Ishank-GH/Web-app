@@ -4,7 +4,7 @@ const channelType = Object.freeze({
     VIDEO: 'VIDEO'
 });
 
-// ... rest of enums
+
 
 const memberRole = Object.freeze({
     ADMIN: 'ADMIN',

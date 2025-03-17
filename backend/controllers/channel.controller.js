@@ -1,75 +1,116 @@
 const asyncHandler = require('../middlewares/asyncHandler.middleware');
-const channelModel = require('../models/channel.model')
-const communityModel = require('../models/community.model')
-const channelService = require('../services/channel.service')
+const Channel = require('../models/channel.model');
+const Message = require('../models/message.model');
+const Community = require('../models/community.model');
+const { channelType } = require('../models/enums');
+const mongoose = require('mongoose');
 
+exports.getChannels = asyncHandler(async (req, res) => {
+  const channels = await Channel.find()
+    .populate('community', 'name')
+    .populate('createdBy', 'username');
 
-exports.createChannel = asyncHandler(async(req, res) => {
-        const {name, type, communityId } = req.body;
+  res.json({
+    success: true,
+    data: channels
+  });
+});
 
-        const community = await communityModel.findById(communityId);
+exports.createChannel = asyncHandler(async (req, res) => {
+  const { name, description, type = 'TEXT' } = req.body;
+  const { communityId } = req.params;
 
-        if(!community.admins.includes(req.user._id)){
-            const err = new Error('Admin access required')
-            err.statusCode = 403;
-            throw err;
-        }
+  // First check if community exists
+  const community = await Community.findById(communityId);
+  if (!community) {
+    return res.status(404).json({
+      success: false,
+      message: 'Community not found'
+    });
+  }
 
-        const channel = await channelService.createChannel({
-            name,
-            type,
-            community: communityId
-        })
+  // Create new channel
+  const channel = await Channel.create({
+    name,
+    description,
+    type,
+    community: communityId,
+    createdBy: req.user._id,
+    members: [req.user._id]
+  });
 
-        res.status(201).json({
-            success: true,
-            data: channel
-        })
-})
+  // Add channel to community and save
+  community.channels.push(channel._id);
+  await community.save();
 
-exports.updateChannel = asyncHandler(async(req, res) => {
-        const {name, type} = req.body
-        const channel = await channelModel.findById(req.params.id)
-        const community = await communityModel.findById(channel.community)
+  // Fetch the populated channel
+  const populatedChannel = await Channel.findById(channel._id)
+    .populate('createdBy', 'username avatar')
+    .populate('community', 'name');
 
-        if(!community.admins.includes(req.params._id)){
-            const err = new Error('Admin access required')
-            err.statusCode = 403;
-            throw err;
-        }
-        channel.name = name || channel.name;
-        channel.type = type || channel.type;
-        await channel.save();
+  res.status(201).json({
+    success: true,
+    data: populatedChannel
+  });
+});
 
-        res.status(200).json({
-            success: true,
-            message: 'Channel updated',
-            data: channel
-        })
-})
+exports.getChannelMessages = asyncHandler(async (req, res) => {
+  const { channelId } = req.params;
 
-exports.deleteChannel = asyncHandler(async(req, res) => {
-        // const {name, type} = req.body
-        const channel = await channelModel.findById(req.params.id)
-        const community = await communityModel.findById(channel.community)
+  const messages = await Message.find({ channel: channelId })
+    .populate('sender', 'username avatar') 
+    .sort({ timestamp: 1 });
 
-        if(!community.admins.includes(req.params._id)){
-            const err = new Error('Admin access required')
-            err.statusCode = 403;
-            throw err;
-        }
-        
-        await channel.deleteOne();
+  res.json({
+    success: true,
+    data: messages
+  });
+});
 
-        res.status(200).json({
-            success: true,
-            message: 'Channel deleted',
-        })
-})
+exports.createChannelMessage = asyncHandler(async (req, res) => {
+  const { channelId } = req.params;
+  const { content, type = 'text' } = req.body;
 
-exports.listOfChannels = asyncHandler(async(req, res) => {
-    const channels = await channelModel.find({ 
-        communities: req.params.communityId});
+  const channel = await Channel.findById(channelId)
+    .populate('community');
 
-    res.json(channels)
-})
+  if (!channel) {
+    return res.status(404).json({
+      success: false,
+      message: 'Channel not found'
+    });
+  }
+
+  const message = await Message.create({
+    channel: channelId,
+    sender: req.user._id,
+    content,
+    type
+  });
+
+  const populatedMessage = await message.populate('sender', 'username avatar');
+
+  // Emit to socket if needed
+  if (req.io) {
+    req.io.to(`channel:${channelId}`).emit('channel:message', message);
+  }
+
+  res.status(201).json({
+    success: true,
+    data: populatedMessage
+  });
+});
+
+exports.listOfChannels = asyncHandler(async (req, res) => {
+  const { communityId } = req.params;
+
+  const channels = await Channel.find({ community: communityId })
+    .populate('createdBy', 'username avatar')
+    .sort({ createdAt: 1 });
+
+  res.json({
+    success: true,
+    data: channels || [] // Ensure we always return an array
+  });
+});
+

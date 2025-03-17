@@ -3,58 +3,45 @@ import { Link, Outlet } from "react-router-dom";
 import UserLogout from "./UserLogout";
 import ProfileDropdown from "./ProfileDropdown";
 import axios from "axios";
+import { toast } from "react-toastify";
+import { getInitials } from "../utils/helpers"; 
 
-const MasterLayout = ({ children }) => {
+const MasterLayout = () => {
   const [communities, setCommunities] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [formData, setFormData] = useState({
-    name: '',
-    description: ''
-  });
+const [formData, setFormData] = useState({
+  name: '',
+  description: ''
+});
 
   useEffect(() => {
     const fetchCommunities = async () => {
       try {
-        const res = await axios.get(
-          `${import.meta.env.VITE_BASE_URL}/communities`,
+        const response = await axios.get(
+          `${import.meta.env.VITE_BASE_URL}/communities/user/communities`,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem('token')}`
             }
           }
         );
-        setCommunities(res.data);
+        setCommunities(response.data.data);
       } catch (err) {
         console.error("Error fetching communities:", err);
+        toast.error("Failed to load communities");
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchCommunities();
   }, []);
 
-  const handleCreateCommunity = async (e) => {
-    e.preventDefault();
-    try {
-      const res = await axios.post(
-        `${import.meta.env.VITE_BASE_URL}/communities/create`,
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`
-          }
-        }
-      );
-      setCommunities([...communities, res.data]);
-      setShowCreateModal(false);
-      setFormData({ name: '', description: '' });
-    } catch (err) {
-      console.error('Error creating community:', err);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gray-100">
-      {/* Navigation / Top Bar */}
+      {/* Navigation */}
       <nav className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-1">
           <div className="flex items-center justify-between h-16">
@@ -127,29 +114,39 @@ const MasterLayout = ({ children }) => {
             </div>
             
             <div className="space-y-1">
-              {communities.map(community => (
-                <Link
-                  key={community._id}
-                  to={`/communities/${community._id}`}
-                  className="flex items-center p-2 rounded-lg hover:bg-gray-100 group"
-                >
-                  {community.imageUrl ? (
-                    <img 
-                      src={community.imageUrl} 
-                      alt={community.name || ''}
-                      className="w-8 h-8 rounded-full mr-2" 
-                    />
-                  ) : (
-                    <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-2">
-                      {(community?.name || '?').charAt(0).toUpperCase()}
-                    </div>
-                  )}
-                  <span className="truncate">{community?.name || 'Unnamed Community'}</span>
-                  <span className="ml-auto opacity-0 group-hover:opacity-100">
-                    <i className="ri-settings-4-line text-gray-400"></i>
-                  </span>
-                </Link>
-              ))}
+              {loading ? (
+                <div className="flex justify-center py-4">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+                </div>
+              ) : communities.length === 0 ? (
+                <div className="text-center text-gray-500 py-4">
+                  No communities joined yet
+                </div>
+              ) : (
+                communities.map(community => (
+                  <Link
+                    key={community._id}
+                    to={`/communities/${community._id}`}
+                    className="flex items-center p-2 rounded-lg hover:bg-gray-100 group"
+                  >
+                    {community.avatar?.url ? (
+                      <img 
+                        src={community.avatar.url} 
+                        alt={community.name}
+                        className="w-8 h-8 rounded-full mr-2 object-cover" 
+                      />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-2">
+                        {getInitials(community.name)}
+                      </div>
+                    )}
+                    <span className="truncate">{community.name}</span>
+                    <span className="ml-auto opacity-0 group-hover:opacity-100">
+                      <i className="ri-settings-4-line text-gray-400"></i>
+                    </span>
+                  </Link>
+                ))
+              )}
             </div>
 
             <div className="mt-4">
@@ -165,69 +162,9 @@ const MasterLayout = ({ children }) => {
 
         {/* Main Content Area */}
         <div className="flex-grow">
-          {/* Use children if provided, otherwise fallback to the Outlet */}
-          {children || <Outlet />}
+          <Outlet />
         </div>
       </div>
-
-      {/* Create Community Modal */}
-      {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">Create a Community</h2>
-              <button 
-                onClick={() => setShowCreateModal(false)}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                <i className="ri-close-line text-xl"></i>
-              </button>
-            </div>
-            
-            <form onSubmit={handleCreateCommunity} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Community Name</label>
-                <input 
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({...formData, name: e.target.value})}
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Enter community name"
-                  required
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium mb-1">Description</label>
-                <textarea 
-                  value={formData.description}
-                  onChange={(e) => setFormData({...formData, description: e.target.value})}
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  rows="3"
-                  placeholder="Describe your community"
-                  required
-                ></textarea>
-              </div>
-              
-              <div className="flex justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={() => setShowCreateModal(false)}
-                  className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                >
-                  Create Community
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

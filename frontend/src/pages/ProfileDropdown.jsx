@@ -45,7 +45,7 @@ const ProfileDropdown = () => {
           }
         );
         
-        // Ensure avatar object exists with default values
+       
         const userData = {
           ...response.data,
           avatar: response.data.avatar || defaultAvatar
@@ -127,7 +127,20 @@ const ProfileDropdown = () => {
       );
 
       if (response.data.success) {
-        setUserInfo(prev => ({ ...prev, avatar: response.data.data.avatar }));
+        // Update local state
+        setUserInfo(prev => ({ 
+          ...prev, 
+          avatar: response.data.data.avatar 
+        }));
+        
+        // Update user context
+        updateProfile({
+          avatar: response.data.data.avatar
+        });
+        
+        // Reset temp color to match new avatar color
+        setTempColor(response.data.data.avatar.color);
+        
         toast.success(response.data.message);
       }
     } catch (err) {

@@ -1,61 +1,55 @@
-const mongoose = require("mongoose");
-const { memberRole} = require('../models/enums')
+const mongoose = require('mongoose');
 
-const communitySchema = new mongoose.Schema(
-  {
-    name: {
-        type: String,
-        required: true,
-        unique: true,
-        trim: true,
-    },
-   description: {
-        type: String,
-        default: 'A vibrant community for discussions and fun activites'
-   },
-    owner: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'user',
-        required: true
-    },
-    admins: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'user',
-        role: {
-          type: String,
-          enum: Object.values(memberRole),
-          default: memberRole.ADMIN,
-        }
-    }],
-    members: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'user',
-        role: {
-          type: String,
-          enum: Object.values(memberRole),
-          default: memberRole.MEMBER,
-        }
-    }],
-    inviteCode: {
-      type: String,
-      unique: true,
-    },
-    profile: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'profile',
-    },
-    imageUrl: {
-      type: String,
-      // default: '',
-    }
+const communitySchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: true,
+    unique: true,
+    trim: true,
+    maxlength: 100
   },
-  { timestamps: true }
-);
+  description: {
+    type: String,
+    trim: true,
+    maxlength: 500
+  },
+  imageUrl: String,
+  owner: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'user',
+    required: true
+  },
+  admins: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'user'
+  }],
+  members: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'user'
+  }],
+  inviteCode: {
+    type: String,
+    unique: true
+  },
+  channels: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'channel'
+  }],
+  profilePicture: {
+    type: String, 
+    default: null
+  },
+  avatar: {
+    type: Object,
+    default: {
+      type: 'initial',
+      color: 'bg-blue-600 text-white',
+      url: null,
+      publicId: null
+    }
+  }
+}, { timestamps: true });
 
-const communityModel = mongoose.model("community", communitySchema);
-
-// module.exports('membersCount', ()=> {
-//   return this.members.length;
-// })
+const communityModel = mongoose.model('community', communitySchema);
 
 module.exports = communityModel;

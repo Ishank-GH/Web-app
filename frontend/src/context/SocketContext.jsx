@@ -29,17 +29,19 @@ export const SocketProvider = ({ children }) => {
         setSocket(socketInstance);
       });
 
-      // Add in your socket initialization
-      socketInstance.on('channelMessage', (message) => {
-        // Handle new channel messages
+      // Handle community chat messages
+      socketInstance.on('communityMessage', (message) => {
+        // Message will be handled by the CommunityChat component
       });
 
-      socketInstance.on('channelJoin', (userId) => {
-        // Handle user joining channel
+      // Handle user joining community
+      socketInstance.on('userJoinedCommunity', (data) => {
+        console.log(`${data.username} joined the community`);
       });
 
-      socketInstance.on('channelLeave', (userId) => {
-        // Handle user leaving channel
+      // Handle user leaving community
+      socketInstance.on('userLeftCommunity', (data) => {
+        console.log(`${data.username} left the community`);
       });
     }
 

@@ -1,127 +1,207 @@
 const asyncHandler = require('../middlewares/asyncHandler.middleware');
-const communityModel = require('../models/community.model')
-const userModel = require('../models/user.model')
-const communityService = require('../services/community.service');
-const { generateInviteCode } = require('../services/communitycode.service');
+const communityModel = require('../models/community.model');
+const userModel = require('../models/user.model');
+const mongoose = require('mongoose');
+const { uploadOnCloudinary } = require('../services/upload.service');
+const cloudinary = require('cloudinary').v2;
 
-module.exports.createCommunity = asyncHandler(async (req, res) => {
-        const { name, description, imageUrl } = req.body;
+const generateInviteCode = () => {
+    const length = 8;
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let code = '';
+    for (let i = 0; i < length; i++) {
+        code += characters.charAt(Math.floor(Math.random() * characters.length));
+    }
+    return code;
+};
 
-        const isCommunityAlreadyCreated = await communityModel.findOne({ name });
+exports.createCommunity = asyncHandler(async (req, res) => {
+    const { name, description } = req.body;
+    const owner = req.user._id;
 
-        if (isCommunityAlreadyCreated) {
-            return res.status(400).json({ message: "Community already exists" });
-        }
+    // Generate unique invite code
+    let inviteCode = generateInviteCode();
+    while (await communityModel.findOne({ inviteCode })) {
+        inviteCode = generateInviteCode();
+    }
 
-        const community = await communityService.createCommunity({
-            name,
-            description,
-            imageUrl,
-            inviteCode: generateInviteCode(),
-            owner : req.user._id,
-            admins: [req.user._id],
-            members: [req.user._id]
-        })
+    const community = await communityModel.create({
+        name,
+        description,
+        owner,
+        members: [owner],
+        inviteCode
+    });
 
-        //adding communtiy to the list of communities for the user
-        await userModel.findOneAndUpdate(req,user,_id,{
-            $push: {communities: community._id}
+    // Add community to user's communities
+    await userModel.findByIdAndUpdate(owner, {
+        $push: { communities: community._id }
+    });
+
+    res.status(201).json({
+        success: true,
+        data: community
+    });
+});
+
+exports.joinCommunity = asyncHandler(async (req, res) => {
+    const { inviteCode } = req.body;
+    const community = await communityModel.findOne({ inviteCode });
+
+    if (!community) {
+        return res.status(404).json({
+            success: false,
+            message: 'Invalid invite code'
         });
-        
+    }
 
-        res.status(201).json({
-            success: true,
-            message: 'Community created',
-            data: community
-        })
-})
+    // Check if user is already a member
+    if (community.members.includes(req.user._id)) {
+        return res.status(400).json({
+            success: false,
+            message: 'You are already a member of this community'
+        });
+    }
 
-exports.updateCommuntity = asyncHandler(async (req, res) => {
-        const {name, description, imageUrl} = req.body;
-        const community = await communityModel.findById(req.params.id)
+    // Add user to community members
+    community.members.push(req.user._id);
+    await community.save();
 
-        if(!community){
-            return res.status(404).json({message: 'Community not found'})
-        }
+    // Add community to user's communities
+    await userModel.findByIdAndUpdate(req.user._id, {
+        $addToSet: { communities: community._id }
+    });
 
+    res.status(200).json({
+        success: true,
+        message: 'Successfully joined community',
+        data: community
+    });
+});
 
-        if(!communityModel.admins.includes(req.user._id)){
-            const err = new Error('Admin permission is required')
-            err.statusCode = 401;
-            throw err;
-        }
+exports.getCommunityDetails = asyncHandler(async (req, res) => {
+    const { id } = req.params;
 
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({
+            success: false,
+            message: 'Invalid community ID'
+        });
+    }
 
-        //check if name is given and isnt the same as the old name
-        if(name && name !== community.name){
-            const existingCommunity = await communityModel.findOne({name})
-            if(existingCommunity){
-                const err = new Error('Community name already exists')
-                err.statusCode = 400;
-                throw err;
+    const community = await communityModel
+        .findById(id)
+        .populate('owner', 'username avatar')
+        .populate('members', 'username avatar')
+        .populate({
+            path: 'channels',
+            populate: {
+                path: 'createdBy',
+                select: 'username avatar'
             }
-            
-            community.name = name || community.name;
-            community.description = description || community.description;
-            community.imageUrl = imageUrl || community.imageUrl;
-            await community.save();
+        });
 
+    if (!community) {
+        return res.status(404).json({
+            success: false,
+            message: 'Community not found'
+        });
+    }
 
-            res.status(200).json({
-                success: true,
-                message: 'Community updated',
-                data: community
-            })
+    res.status(200).json({
+        success: true,
+        data: community
+    });
+});
 
-        }   
-})
+exports.getUserCommunities = asyncHandler(async (req, res) => {
+  try {
+    const communities = await communityModel
+      .find({ members: req.user._id })
+      .populate('owner', 'username avatar')
+      .populate('members', 'username avatar')
+      .populate('channels');
 
-exports.deleteCommuntity = asyncHandler(async (req, res) => {
+    res.status(200).json({
+      success: true,
+      data: communities
+    });
+  } catch (error) {
+    console.error('Error fetching user communities:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch communities'
+    });
+  }
+});
 
-        const community = await communityModel.findById(req.params.id)
+exports.updateCommunityAvatar = asyncHandler(async (req, res) => {
+    try {
+        const community = await communityModel.findById(req.params.id);
 
-        if(!community.owner.equals(req.params._id)){
-            const err = new Error('Only the owner can delete the community')
-            err.statusCode = 401;
-            throw err;
+        if (!community) {
+            return res.status(404).json({
+                success: false,
+                message: 'Community not found'
+            });
         }
 
-         //remove the community from all members's list of community
-        await userModel.updateMany(
-            { _id: { $in: community.members}},
-            { $pull: { communities: community._id}}
-        )
+        // Check if user is authorized to update avatar (owner only)
+        if (!community.owner.equals(req.user._id)) {
+            return res.status(403).json({
+                success: false,
+                message: 'Unauthorized: Only the owner can update the avatar'
+            });
+        }
 
-        await community.deleteOne();
+        if (!req.file) {
+            return res.status(400).json({
+                success: false,
+                message: 'No file uploaded'
+            });
+        }
 
+        // Upload to cloudinary
+        const cloudinaryResponse = await uploadOnCloudinary(req.file.path);
 
+        // Delete old image if exists
+        if (community.avatar?.publicId) {
+            await cloudinary.uploader.destroy(community.avatar.publicId);
+        }
+
+        community.avatar = {
+            type: 'image',
+            url: cloudinaryResponse.secure_url,
+            publicId: cloudinaryResponse.public_id
+        };
+
+        await community.save();
 
         res.status(200).json({
             success: true,
-            message: 'Community deleted',
-        })
-})
-
-exports.joinCommuntity = asyncHandler(async (req, res) => {
-        const community = await communityModel.findById(req.params.id)
-
-        if(!community){
-            const err = new Error('Community Not found')
-            err.statusCode = 404;
-            throw err;
-        }
-
-        // Add user to members if the user is not already a member
-        if(!community.members.includes(req.params._id)){
-            community.members.push(req.user._id)
-            await community.save();
-            await userModel.findByIdAndUpdate(req.user._id, {
-                $push: { communities: community._id},
-            })
-        }
-        res.json({
-            success: true,
-            message: 'Community joined successfully',
             data: community
-        })
-})
+        });
+    } catch (error) {
+        console.error('Error updating community avatar:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to update community avatar'
+        });
+    }
+});
+
+exports.getInviteCode = asyncHandler(async (req, res) => {
+    const community = await communityModel.findById(req.params.id);
+
+    if (!community) {
+        return res.status(404).json({
+            success: false,
+            message: 'Community not found'
+        });
+    }
+
+    res.status(200).json({
+        success: true,
+        data: { inviteCode: community.inviteCode }
+    });
+});

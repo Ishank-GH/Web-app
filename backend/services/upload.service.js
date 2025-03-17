@@ -1,5 +1,6 @@
 const cloudinary = require('cloudinary').v2;
 const fs = require('fs');
+const path = require('path');
 
 cloudinary.config({ 
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME, 
@@ -11,33 +12,46 @@ cloudinary.config({
 const uploadOnCloudinary = async (localFilePath) => {
     try {
         if (!localFilePath) return null;
+        
+        if (!fs.existsSync(localFilePath)) {
+            console.error('File not found:', localFilePath);
+            return null;
+        }
 
-        // Upload file on cloudinary
+        // Upload file to cloudinary
         const response = await cloudinary.uploader.upload(localFilePath, {
             resource_type: 'auto',
-            folder: 'avatars',
+            folder: 'uploads',
             transformation: [
-                {width: 500, height: 500, crop: "limit"}, // Resize before upload
-                {quality: "auto:good"} // Optimize quality
-            ],
-            eager_async: true // Enable async transformations
+                {width: 1000, height: 1000, crop: "limit"},
+                {quality: "auto:good"}
+            ]
         });
 
         // File has been uploaded successfully
-        console.log('File uploaded successfully', response.secure_url);
+        console.log('File uploaded successfully:', response.secure_url);
         
-        // Remove file from local storage
-        fs.unlinkSync(localFilePath);
-        
+        // Remove temporary file
+        try {
+            fs.unlinkSync(localFilePath);
+        } catch (unlinkError) {
+            console.error('Error removing temp file:', unlinkError);
+            // Continue even if temp file deletion fails
+        }
+
         return response;
 
     } catch (error) {
         console.error("Cloudinary upload error:", error);
-        // Remove the locally saved temporary file as the upload operation failed
-        if (localFilePath && fs.existsSync(localFilePath)) {
-            fs.unlinkSync(localFilePath);
+        // Try to remove the temporary file
+        try {
+            if (localFilePath && fs.existsSync(localFilePath)) {
+                fs.unlinkSync(localFilePath);
+            }
+        } catch (unlinkError) {
+            console.error('Error removing temp file:', unlinkError);
         }
-        return null;
+        throw error; // Re-throw the error to be handled by the controller
     }
 };
 

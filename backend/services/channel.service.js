@@ -1,18 +1,18 @@
 const channelModel = require('../models/channel.model')
 
 module.exports.createChannel = async ({
-    name, type, community 
+    name, type, community, profile
 }) => {
-    if(!name || !type || !community){
-        throw new error('Name or type or community required')
+    if (!name || !type || !community || !profile) {
+        throw new Error('Name, type, community and profile are required');
     }
 
     const channel = await channelModel.create({
         name,
         type,
-        community
-    })
+        community,
+        profile
+    });
 
     return channel;
-
-}
+};

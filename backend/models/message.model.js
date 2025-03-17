@@ -8,18 +8,21 @@ const messageSchema = new mongoose.Schema({
     },
     recipient: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'user',
-        required: true
+        ref: 'user'
+    },
+    channel: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'channel'
     },
     messageType: {
         type: String,
-        enum: ['text', 'file'],
+        enum: ['text', 'file', 'system'],
         default: 'text'
     },
     content: {
         type: String,
-        required: function(){
-            return this.messageType === 'text'
+        required: function() {
+            return this.messageType === 'text' || this.messageType === 'system';
         }
     },
     fileUrl: {
@@ -42,11 +45,9 @@ const messageSchema = new mongoose.Schema({
     toObject: { virtuals: true }
   });
 
-// Add indexes for common queries
 messageSchema.index({ sender: 1, recipient: 1, timestamp: -1 });
 messageSchema.index({ recipient: 1, read: 1 });
 
-// Add methods
 messageSchema.methods.markAsRead = function() {
     this.read = true;
     return this.save();

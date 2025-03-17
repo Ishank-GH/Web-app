@@ -10,8 +10,6 @@ const QuestionList = () => {
   const [sortBy, setSortBy] = useState("newest");
   const [filter, setFilter] = useState("");
   const questionsPerPage = 10;
-
-  // Add useRef for scroll functionality
   const questionsRef = useRef(null);
 
   useEffect(() => {
@@ -48,7 +46,7 @@ const QuestionList = () => {
 
   const totalPages = Math.ceil(filteredAndSortedQuestions.length / questionsPerPage);
 
-  // Modify page change handlers
+
   const handlePageChange = (newPage) => {
     setCurrentPage(newPage);
     // Scroll to top of questions

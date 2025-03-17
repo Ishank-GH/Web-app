@@ -6,6 +6,15 @@ const cors = require('cors');
 const cookieParser= require('cookie-parser')
 const connectToDb = require('./db/db');
 const errorMiddleware = require('./middlewares/error.middleware');
+const fs = require('fs');
+const path = require('path');
+
+// Create temp directory if it doesn't exist
+const tempDir = path.join(__dirname, 'temp');
+if (!fs.existsSync(tempDir)) {
+    fs.mkdirSync(tempDir);
+}
+
 connectToDb();
 const userRoutes = require('./routes/user.routes')
 const questionRoutes = require('./routes/question.routes')

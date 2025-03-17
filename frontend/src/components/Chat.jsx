@@ -17,6 +17,7 @@ const Chat = ({ selectedUser, onMessageSent }) => {
   const { socket } = useSocket();
   const { user } = useUser();
   const messagesEndRef = useRef(null);
+  const [imagePreview, setImagePreview] = useState(null);
 
   const scrollToBottom = () => {
     if (messagesEndRef.current) {
@@ -103,9 +104,13 @@ const Chat = ({ selectedUser, onMessageSent }) => {
   const handleSendMessage = async (e) => {
     e.preventDefault();
     
-    if (!message.trim() || !socket || !selectedUser) return;
+    if ((!message.trim() && !imagePreview) || !socket) return;
 
-    try {
+    if (imagePreview) {
+      await handleSendWithImage();
+    }
+
+    if (message.trim()) {
       const messageData = {
         sender: user._id,
         recipient: selectedUser._id,
@@ -133,12 +138,11 @@ const Chat = ({ selectedUser, onMessageSent }) => {
       };
       
       setMessages(prev => [...prev, newMessage]);
-      setMessage('');
       scrollToBottom();
       onMessageSent();
-    } catch (error) {
-      toast.error('Failed to send message');
     }
+    
+    setMessage('');
   };
 
   const handleFileClick = () => {
@@ -181,30 +185,111 @@ const Chat = ({ selectedUser, onMessageSent }) => {
     }
   }
 
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Create preview
+      const preview = URL.createObjectURL(file);
+      setImagePreview({
+        file,
+        preview
+      });
+    }
+  };
+
+  const handleRemoveImage = () => {
+    if (imagePreview?.preview) {
+      URL.revokeObjectURL(imagePreview.preview); // Clean up preview URL
+    }
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+
+  useEffect(() => {
+    return () => {
+      if (imagePreview?.preview) {
+        URL.revokeObjectURL(imagePreview.preview);
+      }
+    };
+  }, [imagePreview]);
+
+  const handleSendWithImage = async () => {
+    if (imagePreview) {
+      try {
+        const formData = new FormData();
+        formData.append('file', imagePreview.file);
+        
+        const response = await axios.post(
+          `${import.meta.env.VITE_BASE_URL}/messages/upload-file`,
+          formData,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('token')}`,
+              'Content-Type': 'multipart/form-data'
+            }
+          }
+        );
+        
+        if (response.data) {
+          const messageData = {
+           
+            channelId: channel._id,
+            messageType: 'file',
+            fileUrl: response.data.filePath
+          };
+          
+          socket.emit('sendCommunityMessage', messageData); 
+          setImagePreview(null);
+        }
+      } catch (err) {
+        console.error(err);
+        toast.error('Failed to upload image');
+      }
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto flex gap-4">
       <div className="flex-1 bg-white rounded-xl shadow-sm h-[78vh] flex flex-col">
         {/* Chat Header */}
-        <div className="p-4 border-b">
-          <div className="flex items-center">
-            <div className={`h-10 w-10 rounded-full flex items-center justify-center overflow-hidden ${
-              selectedUser.avatar?.type !== 'image' ? 'bg-blue-100' : ''
-            }`}>
-              {selectedUser.avatar?.type === 'image' ? (
-                <img 
-                  src={selectedUser.avatar.url} 
-                  alt={selectedUser.username}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <div className={`h-full w-full flex items-center justify-center ${selectedUser.avatar?.color || 'bg-blue-100'}`}>
-                  {getInitials(selectedUser.username)}
+        <div className="p-4 border-b bg-gradient-to-r from-blue-50 to-indigo-50">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <div className="h-12 w-12 rounded-full overflow-hidden">
+                <div className={`h-10 w-10 rounded-full flex items-center justify-center overflow-hidden ${
+                  selectedUser.avatar?.type !== 'image' ? 'bg-blue-100' : ''
+                }`}>
+                  {selectedUser.avatar?.type === 'image' ? (
+                    <img 
+                      src={selectedUser.avatar.url} 
+                      alt={selectedUser.username}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className={`h-full w-full flex items-center justify-center ${selectedUser.avatar?.color || 'bg-blue-100'}`}>
+                      {getInitials(selectedUser.username)}
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
+              <div className="ml-3">
+                <h2 className="font-bold text-gray-900">{selectedUser.username}</h2>
+                <div className="flex items-center">
+                  <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                  <span className="text-sm text-gray-500">Online</span>
+                </div>
+              </div>
             </div>
-            <div className="ml-3">
-              <h2 className="font-semibold">{selectedUser.username}</h2>
-              <p className="text-sm text-gray-500">{selectedUser.email}</p>
+            <div className="flex items-center space-x-3">
+              <button className="p-2 hover:bg-gray-100 rounded-full">
+                <i className="ri-search-line text-gray-600"></i>
+              </button>
+              <button className="p-2 hover:bg-gray-100 rounded-full">
+                <i className="ri-more-2-fill text-gray-600"></i>
+              </button>
             </div>
           </div>
         </div>
@@ -253,6 +338,25 @@ const Chat = ({ selectedUser, onMessageSent }) => {
           )}
           <div ref={messagesEndRef} />
         </div>
+
+        {/* Image Preview */}
+        {imagePreview && (
+          <div className="p-4 border-t">
+            <div className="relative inline-block">
+              <img 
+                src={imagePreview.preview} 
+                alt="Preview" 
+                className="max-h-32 rounded-lg"
+              />
+              <button
+                onClick={handleRemoveImage}
+                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+              >
+                <i className="ri-close-line"></i>
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Message Input */}
         <form onSubmit={handleSendMessage} className="flex items-center space-x-2 py-3 px-2 border-t">
