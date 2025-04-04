@@ -6,6 +6,7 @@ import EmojiPicker from "emoji-picker-react";
 import ToolTip from "../helper/ToolTip";
 import { toast } from 'react-toastify';
 import moment from 'moment';
+import Loader from '../components/Loader';
 
 const Chat = ({ selectedUser, onMessageSent }) => {
   const fileInputRef = useRef();
@@ -21,13 +22,14 @@ const Chat = ({ selectedUser, onMessageSent }) => {
 
   const scrollToBottom = () => {
     if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+      messagesEndRef.current.scrollIntoView({ 
+        behavior: "instant", 
+        block: "end"
+      });
     }
   };
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+  useEffect(() => {scrollToBottom();}, [messages]);
 
   useEffect(() => {
     const loadMessages = async () => {
@@ -106,10 +108,6 @@ const Chat = ({ selectedUser, onMessageSent }) => {
     
     if ((!message.trim() && !imagePreview) || !socket) return;
 
-    if (imagePreview) {
-      await handleSendWithImage();
-    }
-
     if (message.trim()) {
       const messageData = {
         sender: user._id,
@@ -146,19 +144,28 @@ const Chat = ({ selectedUser, onMessageSent }) => {
   };
 
   const handleFileClick = () => {
-    if(fileInputRef.current){
-      fileInputRef.current.click()
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
     }
-  }
-  const handleFileChange = async(e) => {
-    try {
-      const file = e.target.files[0];
-      if (file) {
-        const formData = new formData();
-        formData.append('file', file)
+  };
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      try {
+        // Create preview first
+        const preview = URL.createObjectURL(file);
+        setImagePreview({
+          file,
+          preview
+        });
+
+        const formData = new FormData();
+        formData.append('file', file);
+
         const response = await axios.post(
           `${import.meta.env.VITE_BASE_URL}/messages/upload-file`,
-          file,
+          formData,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem('token')}`,
@@ -166,34 +173,25 @@ const Chat = ({ selectedUser, onMessageSent }) => {
             }
           }
         );
-        
-        if (response.status===200 && response.data) {
+
+        if (response.data) {
           const messageData = {
             sender: user._id,
             recipient: selectedUser._id,
-            content: undefined,
+            content: '',
             messageType: 'file',
             fileUrl: response.data.filePath
           };
-          
-          socket.emit('sendMessage', messageData);
-        }
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error(err.response?.data?.message || "Failed to upload file");
-    }
-  }
 
-  const handleFileUpload = async (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      // Create preview
-      const preview = URL.createObjectURL(file);
-      setImagePreview({
-        file,
-        preview
-      });
+          socket.emit('sendMessage', messageData);
+        
+          handleRemoveImage();
+        }
+      } catch (err) {
+        console.error(err);
+        toast.error(err.response?.data?.message || "Failed to upload file");
+        handleRemoveImage();
+      }
     }
   };
 
@@ -207,7 +205,6 @@ const Chat = ({ selectedUser, onMessageSent }) => {
     }
   };
 
-
   useEffect(() => {
     return () => {
       if (imagePreview?.preview) {
@@ -216,46 +213,11 @@ const Chat = ({ selectedUser, onMessageSent }) => {
     };
   }, [imagePreview]);
 
-  const handleSendWithImage = async () => {
-    if (imagePreview) {
-      try {
-        const formData = new FormData();
-        formData.append('file', imagePreview.file);
-        
-        const response = await axios.post(
-          `${import.meta.env.VITE_BASE_URL}/messages/upload-file`,
-          formData,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem('token')}`,
-              'Content-Type': 'multipart/form-data'
-            }
-          }
-        );
-        
-        if (response.data) {
-          const messageData = {
-           
-            channelId: channel._id,
-            messageType: 'file',
-            fileUrl: response.data.filePath
-          };
-          
-          socket.emit('sendCommunityMessage', messageData); 
-          setImagePreview(null);
-        }
-      } catch (err) {
-        console.error(err);
-        toast.error('Failed to upload image');
-      }
-    }
-  };
-
   return (
     <div className="max-w-7xl mx-auto flex gap-4">
-      <div className="flex-1 bg-white rounded-xl shadow-sm h-[78vh] flex flex-col">
+      <div className="flex-1 bg-white dark:bg-gray-800 rounded-xl shadow-sm h-[84vh] flex flex-col">
         {/* Chat Header */}
-        <div className="p-4 border-b bg-gradient-to-r from-blue-50 to-indigo-50">
+        <div className="p-4 border-b dark:border-gray-700 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-750">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               <div className="h-12 w-12 rounded-full overflow-hidden">
@@ -276,20 +238,8 @@ const Chat = ({ selectedUser, onMessageSent }) => {
                 </div>
               </div>
               <div className="ml-3">
-                <h2 className="font-bold text-gray-900">{selectedUser.username}</h2>
-                <div className="flex items-center">
-                  <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
-                  <span className="text-sm text-gray-500">Online</span>
-                </div>
+                <h2 className="font-bold text-gray-900 dark:text-white">{selectedUser.username}</h2>
               </div>
-            </div>
-            <div className="flex items-center space-x-3">
-              <button className="p-2 hover:bg-gray-100 rounded-full">
-                <i className="ri-search-line text-gray-600"></i>
-              </button>
-              <button className="p-2 hover:bg-gray-100 rounded-full">
-                <i className="ri-more-2-fill text-gray-600"></i>
-              </button>
             </div>
           </div>
         </div>
@@ -298,7 +248,7 @@ const Chat = ({ selectedUser, onMessageSent }) => {
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {loading ? (
             <div className="flex items-center justify-center h-full">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-blue-400"></div>
             </div>
           ) : (
             messages.map((msg, index) => {
@@ -310,7 +260,7 @@ const Chat = ({ selectedUser, onMessageSent }) => {
                 <React.Fragment key={msg._id}>
                   {showDate && (
                     <div className="text-center my-4">
-                      <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-sm">
+                      <span className="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-3 py-1 rounded-full text-sm">
                         {moment(msg.timestamp).format('MMMM D, YYYY')}
                       </span>
                     </div>
@@ -319,14 +269,23 @@ const Chat = ({ selectedUser, onMessageSent }) => {
                     <div className={`max-w-[70%] rounded-lg p-3 ${
                       msg.sender._id === user._id
                         ? "bg-blue-600 text-white"
-                        : "bg-gray-100 text-gray-800"
+                        : "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white"
                     }`}>
                       {msg.sender._id !== user._id && (
                         <p className="text-sm font-semibold mb-1">{msg.sender.username}</p>
                       )}
-                      <p>{msg.content}</p>
+                      {msg.messageType === 'file' ? (
+                        <img 
+                          src={msg.fileUrl} 
+                          alt="Shared file" 
+                          className="max-w-full rounded-lg"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <p>{msg.content}</p>
+                      )}
                       <p className={`text-xs ${
-                        msg.sender._id === user._id ? "text-blue-100" : "text-gray-500"
+                        msg.sender._id === user._id ? "text-blue-100" : "text-gray-500 dark:text-gray-400"
                       } text-right mt-1`}>
                         {moment(msg.timestamp).format('h:mm A')}
                       </p>
@@ -341,7 +300,7 @@ const Chat = ({ selectedUser, onMessageSent }) => {
 
         {/* Image Preview */}
         {imagePreview && (
-          <div className="p-4 border-t">
+          <div className="p-4 border-t dark:border-gray-700 bg-white dark:bg-gray-800">
             <div className="relative inline-block">
               <img 
                 src={imagePreview.preview} 
@@ -359,18 +318,18 @@ const Chat = ({ selectedUser, onMessageSent }) => {
         )}
 
         {/* Message Input */}
-        <form onSubmit={handleSendMessage} className="flex items-center space-x-2 py-3 px-2 border-t">
+        <form onSubmit={handleSendMessage} className="flex items-center space-x-2 py-3 px-2 border-t dark:border-gray-700">
           <input
             type="text"
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             placeholder="Type a message..."
-            className="flex-1 border rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500"
+            className="flex-1 border dark:border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500 bg-white dark:bg-gray-700 dark:text-white"
           />
           <ToolTip message="Attachments">
             <button 
               type="button"
-              className="px-2 py-1 focus:border-none focus:outline-none duration-300 transition-all text-neutral-800 rounded-lg hover:bg-blue-600 hover:text-white"
+              className="px-2 py-1 focus:border-none focus:outline-none duration-300 transition-all text-neutral-800 dark:text-white rounded-lg hover:bg-blue-600 hover:text-white"
               onClick={handleFileClick}
             >
               <i className="ri-attachment-2 text-2xl"></i>
@@ -382,7 +341,7 @@ const Chat = ({ selectedUser, onMessageSent }) => {
             <ToolTip message="Emojis">
               <button
                 type="button"
-                className="px-2 py-1 focus:border-none focus:outline-none duration-300 transition-all text-neutral-800 rounded-lg hover:bg-blue-600 hover:text-white"
+                className="px-2 py-1 focus:border-none focus:outline-none duration-300 transition-all text-neutral-800 dark:text-white rounded-lg hover:bg-blue-600 hover:text-white"
                 onClick={handleEmojiClick}
               >
                 <i className="ri-emoji-sticker-fill text-2xl"></i>

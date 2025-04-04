@@ -81,7 +81,7 @@ const handleCommunityMessage = async (data, socket) => {
 io.on("connection", async (socket) => {
   try {
     const userId = socket.handshake.query.userId;
-    socket.userId = userId; // Store userId in socket for easy access
+    socket.userId = userId; 
 
     if (userId) {
       userSocketMap.set(userId, socket.id);
@@ -94,7 +94,6 @@ io.on("connection", async (socket) => {
     socket.on("sendMessage", (data) => handleMessage(data, socket));
     socket.on("disconnect", () => handleDisconnect(socket));
 
-    // Handle joining a community channel
     socket.on("joinChannel", async (channelId) => {
       socket.join(`channel:${channelId}`);
       

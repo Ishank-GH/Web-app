@@ -39,7 +39,6 @@ const answerSchema = new mongoose.Schema(
   { timestamps: true }
 )
 
-// Update the voteCount virtual
 answerSchema.virtual("voteCount").get(function () {
     const upvotes = this.votes?.upvotes?.length || 0;
     const downvotes = this.votes?.downvotes?.length || 0;

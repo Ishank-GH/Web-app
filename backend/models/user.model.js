@@ -68,5 +68,3 @@ userSchema.statics.hashPassword = async function (password) {
 const userModel = mongoose.model("user", userSchema);
 
 module.exports = userModel;
-
-// Invalid Signature d398aef0e7c6434f1398d05cde1a8301cb9f2c48. String to sign - 'folder=avatars&timestamp=1740931333&transformation=c_fill,h_500,w_500'.

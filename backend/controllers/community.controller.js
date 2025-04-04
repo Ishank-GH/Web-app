@@ -3,7 +3,6 @@ const communityModel = require('../models/community.model');
 const userModel = require('../models/user.model');
 const mongoose = require('mongoose');
 const { uploadOnCloudinary } = require('../services/upload.service');
-const cloudinary = require('cloudinary').v2;
 
 const generateInviteCode = () => {
     const length = 8;
@@ -19,6 +18,22 @@ exports.createCommunity = asyncHandler(async (req, res) => {
     const { name, description } = req.body;
     const owner = req.user._id;
 
+    let avatarData = {
+        type: 'initial',
+        color: 'bg-blue-600 text-white',
+        url: null,
+        publicId: null
+    };
+
+    if (req.file) {
+        const cloudinaryResponse = await uploadOnCloudinary(req.file.path);
+        avatarData = {
+            type: 'image',
+            url: cloudinaryResponse.secure_url,
+            publicId: cloudinaryResponse.public_id
+        };
+    }
+
     // Generate unique invite code
     let inviteCode = generateInviteCode();
     while (await communityModel.findOne({ inviteCode })) {
@@ -30,7 +45,8 @@ exports.createCommunity = asyncHandler(async (req, res) => {
         description,
         owner,
         members: [owner],
-        inviteCode
+        inviteCode,
+        avatar: avatarData
     });
 
     // Add community to user's communities

@@ -1,7 +1,8 @@
 import React from "react";
 import { Route, Routes } from "react-router-dom";
-import UserLogin from "./pages/UserLogin";
-import UserSignup from "./pages/UserSignup";
+import LandingPage from "./landing/pages/Home";
+import Login from "./pages/UserLogin"; 
+import Signup from "./pages/UserSignup";
 import Home from "./pages/Home";
 import UserProtectedWrapper from "./pages/UserProtectedWrapper";
 import UserLogout from "./pages/UserLogout";
@@ -16,17 +17,19 @@ import UserContext from "./context/UserContext";
 import Communities from './pages/Communities';
 import CommunityDetails from './pages/CommunityDetails';
 
-
 const App = () => {
   return (
     <UserContext>
       <SocketProvider>
         <Routes>
-          <Route path="/login" element={<UserLogin />} />
-          <Route path="/signup" element={<UserSignup />} />
+          <Route path="/" element={<LandingPage />} />
+          
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+
           <Route element={<MasterLayout />}>
             <Route
-              path="/"
+              path="/home"
               element={
                 <UserProtectedWrapper>
                   <Home />
@@ -73,9 +76,22 @@ const App = () => {
                 </UserProtectedWrapper>
               }
             />
-            <Route path="/communities" element={<Communities />} />
-            <Route path="/communities/:communityId" element={<CommunityDetails />} />
-            <Route path="/communities/:id" element={<CommunityDetails />} />
+            <Route 
+              path="/communities" 
+              element={
+                <UserProtectedWrapper>
+                  <Communities />
+                </UserProtectedWrapper>
+              } 
+            />
+            <Route 
+              path="/communities/:communityId" 
+              element={
+                <UserProtectedWrapper>
+                  <CommunityDetails />
+                </UserProtectedWrapper>
+              } 
+            />
           </Route>
         </Routes>
       </SocketProvider>

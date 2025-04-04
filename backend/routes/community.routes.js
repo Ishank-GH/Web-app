@@ -5,7 +5,7 @@ const authMiddleware = require('../middlewares/auth.middleware');
 const upload = require('../middlewares/multer.middleware');
 
 router.get('/user/communities', authMiddleware.authUser, communityController.getUserCommunities);
-router.post('/create', authMiddleware.authUser, communityController.createCommunity);
+router.post('/create', authMiddleware.authUser, upload.single('avatar'), communityController.createCommunity);
 router.get('/:id', authMiddleware.authUser, communityController.getCommunityDetails);
 router.post('/join', authMiddleware.authUser, communityController.joinCommunity);
 router.post('/:id/avatar', authMiddleware.authUser, upload.single('avatar'), communityController.updateCommunityAvatar);

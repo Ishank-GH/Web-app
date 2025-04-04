@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
 import moment from 'moment';
+import Loader from '../components/Loader';
 
 const QuestionList = () => {
   const [questions, setQuestions] = useState([]);
@@ -54,13 +55,12 @@ const QuestionList = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto">
-      {/* Header */}
-      <div ref={questionsRef} className="bg-white rounded-xl shadow-sm p-6 mb-4">
+    <div className="max-w-6xl mx-auto">
+      <div ref={questionsRef} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-4">
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">All Questions</h1>
-            <p className="text-gray-500 text-sm mt-1">{questions.length} questions</p>
+            <h1 className="text-2xl font-bold text-gray-800 dark:text-white">All Questions</h1>
+            <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">{questions.length} questions</p>
           </div>
           <Link
             to="/questions/create"
@@ -70,7 +70,7 @@ const QuestionList = () => {
           </Link>
         </div>
 
-        <div className="mt-3 flex flex-col sm:flex-row gap-4">
+        <div className="mt-3 flex flex-col sm:flex-row gap-4 mb-4">
           <div className="relative flex-1">
             <i className="ri-search-line absolute left-3 top-2 text-gray-400"></i>
             <input
@@ -78,13 +78,13 @@ const QuestionList = () => {
               placeholder="Search questions..."
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-10 pr-4 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 dark:text-white"
             />
           </div>
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
-            className="px-4 py-2 border rounded-lg bg-white"
+            className="px-4 py-2 border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 dark:text-white"
           >
             <option value="newest">Newest First</option>
             <option value="votes">Most Votes</option>
@@ -92,48 +92,35 @@ const QuestionList = () => {
             <option value="views">Most Views</option>
           </select>
         </div>
-      </div>
 
-      {/* Question List */}
-      {loading ? (
-        <div className="text-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-        </div>
-      ) : currentQuestions.length > 0 ? (
-        <div className="space-y-4">
-          {currentQuestions.map((question) => (
-            <div key={question._id} className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow overflow-hidden">
-              <div className="flex gap-4 p-5">
-                <div className="flex flex-col items-center text-center min-w-[80px]">
-                  <div className="text-gray-700">
-                    <div className="font-bold text-xl">{question.voteCount}</div>
-                    <div className="text-sm">votes</div>
+        {loading ? (
+          <Loader />
+        ) : currentQuestions.length > 0 ? (
+          <div className="space-y-4">
+            {currentQuestions.map((question) => (
+              <div key={question._id} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-md transition-shadow overflow-hidden border dark:border-gray-700">
+                <div className="flex gap-4 p-5">
+                  <div className="flex flex-col items-center text-center min-w-[80px]">
+                    <div className="text-gray-700 dark:text-gray-300">
+                      <div className="font-bold text-xl">{question.voteCount}</div>
+                      <div className="text-sm">votes</div>
+                    </div>
+                    <div className={`mt-2 ${question.answers.length > 0 ? 'text-green-600 dark:text-green-400' : 'text-gray-600 dark:text-gray-400'}`}>
+                      <div className="font-bold text-xl">{question.answers.length}</div>
+                      <div className="text-sm">answers</div>
+                    </div>
+                    <div className="mt-2 text-gray-500 dark:text-gray-400">
+                      <div className="text-sm">{question.viewCount} views</div>
+                    </div>
                   </div>
-                  <div className={`mt-2 ${question.answers.length > 0 ? 'text-green-600' : 'text-gray-600'}`}>
-                    <div className="font-bold text-xl">{question.answers.length}</div>
-                    <div className="text-sm">answers</div>
-                  </div>
-                  <div className="mt-2 text-gray-500">
-                    <div className="text-sm">{question.viewCount} views</div>
-                  </div>
-                </div>
-                         
-                <div className="flex-1">
-                  <Link to={`/questions/${question._id}`} className="text-xl font-semibold text-blue-600 hover:text-blue-800">
-                    {question.title}
-                  </Link>
-                  <p className="mt-2 text-gray-600 line-clamp-2">{question.body}</p>
                   
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    {question.tags?.map(tag => (
-                      <span key={tag} className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-
-                  <div className="mt-4 flex justify-end text-sm text-gray-500">
-                    <div className="flex items-center">
+                  <div className="flex-1">
+                    <Link to={`/questions/${question._id}`} className="text-xl font-semibold text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">
+                      {question.title}
+                    </Link>
+                    <p className="mt-2 text-gray-600 dark:text-gray-300 line-clamp-2">{question.body}</p>
+                    
+                    <div className="mt-4 flex justify-end text-sm text-gray-500 dark:text-gray-400">
                       {question.author?.avatar?.type === 'image' ? (
                         <img
                           src={question.author.avatar.url}
@@ -152,27 +139,26 @@ const QuestionList = () => {
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-12 bg-white rounded-xl shadow-sm">
-          <i className="ri-questionnaire-line text-5xl text-gray-400 mb-4"></i>
-          <p className="text-gray-600">No questions found matching your criteria.</p>
-        </div>
-      )}
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-xl shadow-sm">
+            <i className="ri-questionnaire-line text-5xl text-gray-400 dark:text-gray-500 mb-4"></i>
+            <p className="text-gray-600 dark:text-gray-400">No questions found matching your criteria.</p>
+          </div>
+        )}
+      </div>
 
-      {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-2 mt-8">
           <button
             onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
             disabled={currentPage === 1}
-            className="px-4 py-2 bg-white rounded-lg border disabled:opacity-50 hover:bg-gray-50"
+            className="px-4 py-2 bg-white dark:bg-gray-800 rounded-lg border dark:border-gray-700 disabled:opacity-50 hover:bg-gray-50 dark:hover:bg-gray-700"
           >
             <i className="ri-arrow-left-s-line"></i>
           </button>
-          {/* Add page numbers */}
+          
           {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
             <button
               key={page}
@@ -180,7 +166,7 @@ const QuestionList = () => {
               className={`px-4 py-2 rounded-lg ${
                 currentPage === page 
                   ? 'bg-blue-600 text-white' 
-                  : 'bg-white border hover:bg-gray-50'
+                  : 'bg-white dark:bg-gray-800 border dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-white'
               }`}
             >
               {page}
@@ -189,7 +175,7 @@ const QuestionList = () => {
           <button
             onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
             disabled={currentPage === totalPages}
-            className="px-4 py-2 bg-white rounded-lg border disabled:opacity-50 hover:bg-gray-50"
+            className="px-4 py-2 bg-white dark:bg-gray-800 rounded-lg border dark:border-gray-700 disabled:opacity-50 hover:bg-gray-50 dark:hover:bg-gray-700"
           >
             <i className="ri-arrow-right-s-line"></i>
           </button> 

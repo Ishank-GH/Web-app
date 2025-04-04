@@ -31,7 +31,6 @@ export const SocketProvider = ({ children }) => {
 
       // Handle community chat messages
       socketInstance.on('communityMessage', (message) => {
-        // Message will be handled by the CommunityChat component
       });
 
       // Handle user joining community

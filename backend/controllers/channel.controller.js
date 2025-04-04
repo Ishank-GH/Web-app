@@ -110,7 +110,7 @@ exports.listOfChannels = asyncHandler(async (req, res) => {
 
   res.json({
     success: true,
-    data: channels || [] // Ensure we always return an array
+    data: channels || [] 
   });
 });
 

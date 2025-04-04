@@ -1,7 +1,8 @@
-import React, { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { useUser } from '../context/UserContext'
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useUser } from '../context/UserContext';
 import { toast } from 'react-toastify';
+import { motion } from 'framer-motion';
 import 'react-toastify/dist/ReactToastify.css';
 
 const UserLogin = () => {
@@ -14,82 +15,111 @@ const UserLogin = () => {
     e.preventDefault();
     const result = await login(email, password);
     if (result.success) {
-      navigate('/');
+      navigate('/home');
     } else {
       toast.error(result.error);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8">
-        <h1 className="text-3xl font-bold text-gray-800 mb-8 text-center">
-          Welcome Back
-        </h1>
-        
-        <form className="space-y-6" onSubmit={(e) => {
-            submitHandler(e)
-          }}>
-          <div>
-            <label className="block text-gray-700 mb-2">Email</label>
-            <div className="relative">
-             <input
-                required
-                value={email}
-                onChange={(e) => {
-                 setEmail(e.target.value)
-                 }}
-                type="email"
-                placeholder='email@example.com'
-                className="w-full pl-2 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition "
+    <div className="min-h-screen flex items-center justify-center bg-gray-900 py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      {/* Animated background elements */}
+      <div className="fixed -top-64 -left-64 w-[500px] h-[500px] rounded-full bg-primary/30 blur-3xl"></div>
+      <div className="fixed top-1/3 -right-32 w-[300px] h-[300px] rounded-full bg-primary/20 blur-3xl"></div>
+      <div className="fixed -bottom-32 left-32 w-[250px] h-[250px] rounded-full bg-primary/20 blur-3xl"></div>
+      
+      <div className="max-w-md w-full space-y-8 bg-gray-800 p-10 rounded-xl shadow-xl border border-gray-700 relative z-10">
+        <div>
+          <motion.div 
+            className="flex justify-center"
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.5 }}
+          >
+            <div className="flex flex-col items-center">
+              <img 
+                src="/symmunity-bg_1.png" 
+                alt="Symmunity" 
+                className="w-16 h-16 object-contain mb-2"
               />
             </div>
-          </div>
+          </motion.div>
+          <motion.h2 
+            className="mt-6 text-center text-3xl font-extrabold text-white"
+            initial={{ y: -20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
+            Sign in to your account
+          </motion.h2>
+          <motion.p 
+            className="mt-2 text-center text-sm text-gray-300"
+            initial={{ y: -20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+          >
+            Welcome back to Symmunity
+          </motion.p>
+        </div>
 
-          <div>
-            <label className="block text-gray-700 mb-2">Password</label>
-            <div className="relative">
+        <motion.form 
+          className="mt-8 space-y-6"
+          onSubmit={submitHandler}
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.4 }}
+        >
+          <div className="rounded-md shadow-sm space-y-4">
+            <div>
+              <label htmlFor="email-address" className="sr-only">Email address</label>
               <input
+                id="email-address"
+                name="email"
+                type="email"
+                required
+                className="appearance-none relative block w-full px-3 py-2 border border-gray-600 placeholder-gray-400 bg-gray-700 text-white rounded-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
+                placeholder="Email address"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="password" className="sr-only">Password</label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                required
+                className="appearance-none relative block w-full px-3 py-2 border border-gray-600 placeholder-gray-400 bg-gray-700 text-white rounded-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
+                placeholder="Password"
                 value={password}
-                onChange={(e) => {
-                  setPassword(e.target.value)
-                }}
-                required type="password"
-                placeholder='Password'
-                className="w-full pl-2 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
+                onChange={(e) => setPassword(e.target.value)}
               />
             </div>
           </div>
 
-          <button className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors">
-            Sign In
-          </button>
-
-          <div className="flex items-center justify-center space-x-2">
-            <hr className="flex-1 border-gray-300" />
-            <span className="text-gray-500 text-sm">OR</span>
-            <hr className="flex-1 border-gray-300" />
-          </div>
-
-          <div className="flex space-x-4">
-            <button className="flex-1 flex items-center justify-center gap-2 bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 transition-colors">
-             Google
-            </button>
-            <button className="flex-1 flex items-center justify-center gap-2 bg-gray-800 text-white py-2 rounded-lg hover:bg-gray-900 transition-colors">
-              GitHub
+          <div>
+            <button
+              type="submit"
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors"
+            >
+              Sign in
             </button>
           </div>
-
-          <p className="text-center text-gray-600">
-            Don't have an account?{' '}
-            <Link to="/signup" className="text-blue-600 hover:underline">
-              Sign up
-            </Link>
-          </p>
-        </form>
+          
+          <div className="text-sm text-center">
+            <p className="font-medium text-gray-300">
+              Don't have an account?{' '}
+              <Link to="/signup" className="font-medium text-primary hover:text-primary/80 transition-colors">
+                Sign up
+              </Link>
+            </p>
+          </div>
+        </motion.form>
       </div>
     </div>
   );
 };
 
-export default UserLogin
+export default UserLogin;

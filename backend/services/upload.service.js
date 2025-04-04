@@ -28,7 +28,6 @@ const uploadOnCloudinary = async (localFilePath) => {
             ]
         });
 
-        // File has been uploaded successfully
         console.log('File uploaded successfully:', response.secure_url);
         
         // Remove temporary file
@@ -43,7 +42,6 @@ const uploadOnCloudinary = async (localFilePath) => {
 
     } catch (error) {
         console.error("Cloudinary upload error:", error);
-        // Try to remove the temporary file
         try {
             if (localFilePath && fs.existsSync(localFilePath)) {
                 fs.unlinkSync(localFilePath);
@@ -51,7 +49,7 @@ const uploadOnCloudinary = async (localFilePath) => {
         } catch (unlinkError) {
             console.error('Error removing temp file:', unlinkError);
         }
-        throw error; // Re-throw the error to be handled by the controller
+        throw error; 
     }
 };
 

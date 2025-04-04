@@ -5,6 +5,8 @@ import { useUser } from '../context/UserContext';
 import EmojiPicker from 'emoji-picker-react';
 import moment from 'moment';
 import { toast } from 'react-toastify';
+import ToolTip from "../helper/ToolTip";
+import Loader from '../components/Loader';
 
 const CommunityChat = ({ channel }) => {
   const [messages, setMessages] = useState([]);
@@ -19,7 +21,7 @@ const CommunityChat = ({ channel }) => {
   const fileInputRef = useRef(null);
 
   const scrollToBottom = () => {
-    // Add small timeout to ensure DOM has updated
+    // small timeout to ensure DOM has updated
     setTimeout(() => {
       if (messagesEndRef.current) {
         messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
@@ -101,10 +103,21 @@ const CommunityChat = ({ channel }) => {
     scrollToBottom();
   }, [messages]);
 
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (emojiRef.current && !emojiRef.current.contains(e.target)) {
+        setEmojiPickerOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [emojiRef]);
+
   const handleSendMessage = async (e) => {
     e.preventDefault();
     
-    // Allow sending if there's either text or image
     if ((!message.trim() && !imagePreview) || !socket) return;
 
     try {
@@ -135,7 +148,7 @@ const CommunityChat = ({ channel }) => {
         }
       }
 
-      // Then handle text if present
+      // handle text if present
       if (message.trim()) {
         const textMessageData = {
           channelId: channel._id,
@@ -145,8 +158,6 @@ const CommunityChat = ({ channel }) => {
         
         socket.emit('sendCommunityMessage', textMessageData);
       }
-      
-      // Clear both message and image preview
       setMessage('');
       setImagePreview(null);
       if (fileInputRef.current) {
@@ -178,22 +189,22 @@ const CommunityChat = ({ channel }) => {
   };
 
   return (
-    <div className="flex-1 bg-white rounded-xl shadow-sm h-[78vh] flex flex-col">
+    <div className="flex-1 max-w-6xl mx-auto bg-white dark:bg-gray-800 rounded-xl shadow-sm h-[78vh] flex flex-col transition-colors duration-200">
       {/* Chat Header */}
-      <div className="p-4 border-b">
+      <div className="p-4 border-b dark:border-gray-700">
         <div className="flex items-center">
           <div className="flex-1">
-            <h2 className="font-semibold text-lg">#{channel.name}</h2>
-            <p className="text-sm text-gray-500">{channel.description}</p>
+            <h2 className="font-semibold text-lg text-gray-900 dark:text-white">#{channel.name}</h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{channel.description}</p>
           </div>
         </div>
       </div>
 
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-4" style={{ scrollBehavior: 'smooth' }}>
+      <div className="flex-1 overflow-y-auto p-4 bg-white dark:bg-gray-800" style={{ scrollBehavior: 'smooth' }}>
         {loading ? (
           <div className="flex items-center justify-center h-full">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-blue-400"></div>
           </div>
         ) : (
           messages.map((msg, index) => {
@@ -234,7 +245,9 @@ const CommunityChat = ({ channel }) => {
 
                       {/* Message Content */}
                       <div className={`rounded-lg p-3 ${
-                        msg.sender?._id === user._id ? 'bg-blue-600 text-white' : 'bg-gray-100'
+                        msg.sender?._id === user._id 
+                          ? 'bg-blue-600 text-white' 
+                          : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
                       }`}>
                         {msg.sender?._id !== user._id && (
                           <p className="text-sm font-semibold mb-1">{msg.sender?.username}</p>
@@ -261,60 +274,57 @@ const CommunityChat = ({ channel }) => {
       </div>
 
       {/* Message Input */}
-      <form onSubmit={handleSendMessage} className="p-4 border-t">
-        {/* Image Preview */}
-        {imagePreview && (
-          <div className="mb-4">
-            <div className="relative inline-block">
-              <img 
-                src={imagePreview.preview} 
-                alt="Preview" 
-                className="max-h-32 rounded-lg"
-              />
-              <button
-                type="button"
-                onClick={handleRemoveImage}
-                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-              >
-                <i className="ri-close-line"></i>
-              </button>
-            </div>
-          </div>
-        )}
-
-        <div className="flex items-center space-x-2">
-          <button
+      <form onSubmit={handleSendMessage} className="flex items-center space-x-2 py-3 px-2 border-t dark:border-gray-700">
+        <input
+          type="text"
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          placeholder={`Message #${channel.name}`}
+          className="flex-1 border dark:border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500 bg-white dark:bg-gray-700 dark:text-white"
+        />
+        
+        <ToolTip message="Attachments">
+          <button 
             type="button"
-            onClick={() => setEmojiPickerOpen(!emojiPickerOpen)}
-            className="text-gray-500 hover:text-gray-700"
-          >
-            <i className="ri-emotion-line text-xl"></i>
-          </button>
-          
-          <button
-            type="button"
+            className="px-2 py-1 focus:border-none focus:outline-none duration-300 transition-all text-neutral-800 dark:text-white rounded-lg hover:bg-blue-600 hover:text-white"
             onClick={() => fileInputRef.current?.click()}
-            className="text-gray-500 hover:text-gray-700"
           >
-            <i className="ri-attachment-2 text-xl"></i>
+            <i className="ri-attachment-2 text-2xl"></i>
           </button>
-          
-          <input
-            type="text"
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            placeholder={`Message #${channel.name}`}
-            className="flex-1 rounded-lg border p-2 focus:outline-none focus:border-blue-500"
-          />
-          
-          <button
-            type="submit"
-            disabled={!message.trim() && !imagePreview}
-            className="bg-blue-600 text-white rounded-lg px-4 py-2 hover:bg-blue-700 disabled:opacity-50"
-          >
-            Send
-          </button>
+        </ToolTip>
+
+        <div className="relative">
+          <ToolTip message="Emojis">
+            <button
+              type="button"
+              className="px-2 py-1 focus:border-none focus:outline-none duration-300 transition-all text-neutral-800 dark:text-white rounded-lg hover:bg-blue-600 hover:text-white"
+              onClick={() => setEmojiPickerOpen(!emojiPickerOpen)}
+            >
+              <i className="ri-emoji-sticker-fill text-2xl"></i>
+            </button>
+            <div className="absolute bottom-16 right-0" ref={emojiRef}>
+              {emojiPickerOpen && (
+                <EmojiPicker
+                  onEmojiClick={(emojiObject) => {
+                    setMessage(prev => prev + emojiObject.emoji);
+                    setEmojiPickerOpen(false);
+                  }}
+                  autoFocusSearch={false}
+                  width={300}
+                  height={400}
+                />
+              )}
+            </div>
+          </ToolTip>
         </div>
+
+        <button
+          type="submit"
+          disabled={!message.trim() && !imagePreview}
+          className="bg-blue-600 focus:border-none focus:outline-none duration-300 transition-all text-white px-3 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+        >
+          <i className="ri-send-plane-fill"></i>
+        </button>
       </form>
 
       {/* Hidden file input */}
@@ -325,18 +335,6 @@ const CommunityChat = ({ channel }) => {
         className="hidden"
         accept="image/*"
       />
-
-      {/* Emoji Picker */}
-      {emojiPickerOpen && (
-        <div ref={emojiRef} className="absolute bottom-20 left-4">
-          <EmojiPicker
-            onEmojiClick={(emojiObject) => {
-              setMessage(prev => prev + emojiObject.emoji);
-              setEmojiPickerOpen(false);
-            }}
-          />
-        </div>
-      )}
     </div>
   );
 };
