@@ -172,7 +172,7 @@ const ProfileDropdown = () => {
       
       <button
         onClick={toggleDropdown}
-        className="flex items-center space-x-2 p-1.5 rounded-full hover:bg-gray-100 transition-all"
+        className="flex items-center space-x-2 p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-all"
       >
 
         {(userInfo?.avatar?.type === 'image' && userInfo?.avatar?.url) ? (
@@ -180,7 +180,7 @@ const ProfileDropdown = () => {
             <img
               src={userInfo.avatar.url}
               alt="Avatar"
-              className="w-10 h-10 rounded-full object-cover ring-2 ring-offset-2 ring-gray-200"
+              className="w-10 h-10 rounded-full object-cover ring-2 ring-offset-2 ring-gray-200 dark:ring-gray-700"
             />
             <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
           </div>
@@ -192,16 +192,16 @@ const ProfileDropdown = () => {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-96 bg-white rounded-xl shadow-xl z-50 border border-gray-200">
+        <div className={`absolute right-0 mt-2 w-96 bg-white dark:bg-gray-800 rounded-xl shadow-xl z-50 border border-gray-200 dark:border-gray-700`}>
           <div className="p-6">
-            <h1 className="font-bold mb-3 text-lg">Edit Profile</h1>
+            <h1 className="font-bold mb-3 text-lg text-gray-900 dark:text-white">Edit Profile</h1>
             <div className="flex items-center space-x-4 mb-6">
               {userInfo.avatar.type === 'image' ? (
                 <div className="relative group">
                   <img
                     src={userInfo.avatar.url}
                     alt="Avatar"
-                    className="w-20 h-20 rounded-full object-cover ring-4 ring-offset-2 ring-gray-100"
+                    className="w-20 h-20 rounded-full object-cover ring-4 ring-offset-2 ring-gray-100 dark:ring-gray-700"
                   />
                   <div className="absolute inset-0 rounded-full bg-black bg-opacity-40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                     <input
@@ -229,12 +229,12 @@ const ProfileDropdown = () => {
               )}
               
               <div className="flex-1">
-                <h1 className="font-medium mb-1 text-lg">Username</h1>
+                <h1 className="font-medium mb-1 text-lg text-gray-900 dark:text-white">Username</h1>
                 <input
                   type="text"
                   value={tempUsername}
                   onChange={(e) => setTempUsername(e.target.value)}
-                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 dark:bg-gray-700 dark:text-white"
                 />
               </div>
             </div>
@@ -242,7 +242,7 @@ const ProfileDropdown = () => {
             {/* Color selection */}
             {userInfo.avatar.type === 'initial' && (
               <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Profile Color
                 </label>
                 <div className="flex space-x-3">
@@ -276,13 +276,13 @@ const ProfileDropdown = () => {
                 <button
                   type="button"
                   onClick={handleCancel}
-                  className="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50"
+                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleSubmit}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700"
+                  className="px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-700 dark:hover:bg-blue-600"
                 >
                   Save Changes
                 </button>

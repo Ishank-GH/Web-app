@@ -3,7 +3,7 @@ import gsap from 'gsap';
 import { useMouseTracking, usePageTransition } from './useAnimation';
 import "remixicon/fonts/remixicon.css";
 
-const Hero = () => {
+const Hero = ({onSectionClick}) => {
   const mouseTracking = useMouseTracking(50);
   const titleTransition = usePageTransition(300);
   const contentTransition = usePageTransition(500);
@@ -30,7 +30,7 @@ const Hero = () => {
       { opacity: 1, y: 0, duration: 0.5, delay: 0.5 }
     );
     
-    // Smooth continuous animation for blur shapes
+    // continuous animation for blur shapes
     gsap.to(".bg-blur-shape", {
       keyframes: [
         { x: 0, y: 0, duration: 0 },  // Starting position
@@ -89,7 +89,7 @@ const Hero = () => {
               <a href="/signup" className="px-8 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors text-center shadow-lg shadow-primary/20">
                 Get Started Free
               </a>
-              <a href="#how-it-works" className="px-8 py-3 border border-gray-600 rounded-lg text-white hover:bg-gray-800 transition-colors duration-500 text-center">
+              <a onClick={() => onSectionClick('how-it-works')} className="px-8 py-3 border border-gray-600 rounded-lg text-white hover:bg-gray-800 transition-colors duration-500 text-center">
                 See How It Works
               </a>
             </div>

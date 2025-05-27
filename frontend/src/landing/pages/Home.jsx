@@ -33,7 +33,7 @@ const Home = ({ isLoading }) => {
     <div className="bg-gray-900 min-h-screen">
       <Navbar onSectionClick={scrollToSection} />
       <main className="overflow-hidden">
-        <Hero />
+        <Hero onSectionClick={scrollToSection} />
         <Features />
         <HowItWorks />
         <Community />

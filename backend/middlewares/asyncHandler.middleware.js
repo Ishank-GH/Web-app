@@ -3,7 +3,9 @@ const asyncHandler = (fn) => (req, res, next) => {
 
         if(err.code === 11000){
             const field = Object.keys(err.keyPattern)[0];
-            return next(new Error(400, `${field} already exists}`));
+            const error = new Error(`${field} already exists`);
+            error.status = 400;
+            return next(error);
         }
         next(err)
     })

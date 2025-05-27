@@ -118,7 +118,7 @@ const Community = () => {
               <h3 className="text-2xl md:text-3xl font-bold mb-4 text-white">Ready to join the conversation?</h3>
               <p className="text-gray-300/90 mb-6">Create your account today and start connecting with a community of developers. Your next breakthrough might be just one question away.</p>
               <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
-                <a href="#signup" className="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors text-center shadow-lg shadow-primary/20">Get Started For Free</a>
+                <a href="signup" className="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors text-center shadow-lg shadow-primary/20">Get Started For Free</a>
               </div>
             </div>
             

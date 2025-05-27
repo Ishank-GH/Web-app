@@ -121,7 +121,7 @@ const MasterLayout = () => {
                   className="w-10 h-10 object-contain"
                 />
                 <span className="text-gray-900 dark:text-white text-3xl font-bold ml-2">
-                  Symmun<span className="relative">i<span className="absolute top-[-16.5px] right-[0.3px] text-primary text-3xl">.</span></span>ty
+                  Symmun<span className="relative">i<span className="absolute top-[-15.5px] right-[0.1px] text-primary text-3xl">.</span></span>ty
                 </span>
               </div>
             </div>
