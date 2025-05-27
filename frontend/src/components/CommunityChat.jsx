@@ -5,8 +5,8 @@ import { useUser } from '../context/UserContext';
 import EmojiPicker from 'emoji-picker-react';
 import moment from 'moment';
 import { toast } from 'react-toastify';
-import ToolTip from "../helper/ToolTip";
-import Loader from '../components/Loader';
+import ToolTip from "../helper/Tooltip";
+
 
 const CommunityChat = ({ channel }) => {
   const [messages, setMessages] = useState([]);

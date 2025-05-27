@@ -3,7 +3,7 @@ import { useSocket } from '../context/SocketContext';
 import { useUser } from '../context/UserContext';
 import axios from 'axios';
 import EmojiPicker from "emoji-picker-react";
-import ToolTip from "../helper/ToolTip";
+import ToolTip from "../helper/Tooltip";
 import { toast } from 'react-toastify';
 import moment from 'moment';
 import Loader from '../components/Loader';
