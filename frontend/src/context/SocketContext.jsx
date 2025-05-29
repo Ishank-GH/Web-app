@@ -20,7 +20,8 @@ export const SocketProvider = ({ children }) => {
     let socketInstance = null;
 
     if (user && user._id) {
-      socketInstance = io("http://localhost:4000", {
+      const socketUrl = process.env.VITE_BASE_URL ;
+      socketInstance = io(socketUrl, {
         withCredentials: true,
         query: { userId: user._id }
       });
