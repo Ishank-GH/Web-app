@@ -2,6 +2,8 @@ import React, { createContext, useState, useContext, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
+axios.defaults.withCredentials = true;
+
 export const UserDataContext = createContext();
 
 export const useUser = () => {
@@ -25,16 +27,17 @@ const UserContext = ({ children }) => {
     }
 
     try {
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       const response = await axios.get(
         `${import.meta.env.VITE_BASE_URL}/users/profile`,
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
+        { withCredentials: true }
       );
       setUser(response.data);
       setIsAuthenticated(true);
     } catch (error) {
+      console.error('Auth Check Error:', error);
       localStorage.removeItem('token');
+      delete axios.defaults.headers.common['Authorization'];
     } finally {
       setLoading(false);
     }
@@ -48,14 +51,24 @@ const UserContext = ({ children }) => {
     try {
       const response = await axios.post(
         `${import.meta.env.VITE_BASE_URL}/users/login`,
-        { email, password }
+        { email, password },
+        { 
+          withCredentials: true,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
       );
+      
       const { token, user } = response.data;
       localStorage.setItem('token', token);
+      // Set default authorization header for subsequent requests
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       setUser(user);
       setIsAuthenticated(true);
       return { success: true };
     } catch (error) {
+      console.error('Login Error:', error);
       return {
         success: false,
         error: error.response?.data?.message || 'Login failed'
