@@ -20,7 +20,7 @@ export const SocketProvider = ({ children }) => {
     let socketInstance = null;
 
     if (user && user._id) {
-      const socketUrl = process.env.VITE_BASE_URL;
+      const socketUrl = import.meta.env.VITE_BASE_URL;
       socketInstance = io(socketUrl, {
         withCredentials: true,
         query: { userId: user._id }
