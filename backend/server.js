@@ -31,23 +31,29 @@ const handleDisconnect = (socket) => {
   }
 };
 
-const handleMessage = async (message) => {
-  const senderSocketId = userSocketMap.get(message.sender);
-  const recipientSocketId = userSocketMap.get(message.recipient);
+const handleMessage = async (message, socket) => {
+  try {
+    const senderSocketId = userSocketMap.get(message.sender);
+    const recipientSocketId = userSocketMap.get(message.recipient);
 
-  const createdMessage = await messageModel.create(message)
+    const createdMessage = await messageModel.create(message);
 
-  const populatedMessage = await messageModel
-    .findById(createdMessage._id)
-    .populate("sender", "username email avatar")
-    .populate("recipient", "username email avatar");
+    const populatedMessage = await messageModel
+      .findById(createdMessage._id)
+      .populate("sender", "username email avatar")
+      .populate("recipient", "username email avatar");
 
-  // Send to recipient if online
-  if (recipientSocketId) {
-    io.to(recipientSocketId).emit("receiveMessage", populatedMessage);
-  }
-  if (senderSocketId) {
-    io.to(senderSocketId).emit("receiveMessage", populatedMessage);
+    // Send to recipient if online
+    if (recipientSocketId) {
+      io.to(recipientSocketId).emit("receiveMessage", populatedMessage);
+    }
+    // Send back to sender
+    if (senderSocketId) {
+      io.to(senderSocketId).emit("receiveMessage", populatedMessage);
+    }
+  } catch (error) {
+    console.error('Message handling error:', error);
+    socket.emit('error', { message: 'Failed to send message' });
   }
 };
 
@@ -81,7 +87,7 @@ const handleCommunityMessage = async (data, socket) => {
 io.on("connection", async (socket) => {
   try {
     const userId = socket.handshake.query.userId;
-    socket.userId = userId; 
+    socket.userId = userId;
 
     if (userId) {
       userSocketMap.set(userId, socket.id);

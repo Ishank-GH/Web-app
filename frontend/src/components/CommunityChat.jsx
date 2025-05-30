@@ -188,6 +188,29 @@ const CommunityChat = ({ channel }) => {
     }
   };
 
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleConnect = () => {
+      console.log('Socket connected to community chat');
+      if (channel?._id) {
+        socket.emit('joinChannel', channel._id);
+      }
+    };
+
+    const handleDisconnect = () => {
+      console.log('Socket disconnected from community chat');
+    };
+
+    socket.on('connect', handleConnect);
+    socket.on('disconnect', handleDisconnect);
+
+    return () => {
+      socket.off('connect', handleConnect);
+      socket.off('disconnect', handleDisconnect);
+    };
+  }, [socket, channel]);
+
   return (
     <div className="flex-1 max-w-6xl mx-auto bg-white dark:bg-gray-800 rounded-xl shadow-sm h-[78vh] flex flex-col transition-colors duration-200">
       {/* Chat Header */}

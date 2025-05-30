@@ -60,20 +60,24 @@ const Chat = ({ selectedUser, onMessageSent }) => {
   useEffect(() => {
     if (!socket) return;
 
-    socket.on('receiveDirectMessage', (newMessage) => {
+    const handleNewMessage = (newMessage) => {
       if (
-        newMessage.sender._id === selectedUser._id || 
-        newMessage.recipient._id === selectedUser._id
+        (newMessage.sender._id === selectedUser?._id || 
+         newMessage.recipient._id === selectedUser?._id) &&
+        (newMessage.sender._id === user?._id || 
+         newMessage.recipient._id === user?._id)
       ) {
         setMessages(prev => [...prev, newMessage]);
         scrollToBottom();
       }
-    });
+    };
+
+    socket.on('receiveMessage', handleNewMessage);
 
     return () => {
-      socket.off('receiveDirectMessage');
+      socket.off('receiveMessage', handleNewMessage);
     };
-  }, [socket, selectedUser]);
+  }, [socket, selectedUser, user]);
 
    
 
@@ -114,33 +118,15 @@ const Chat = ({ selectedUser, onMessageSent }) => {
         recipient: selectedUser._id,
         content: message.trim(),
         messageType: 'text',
-        fileUrl: undefined,
+        timestamp: new Date()
       };
       
+      // Emit the message to socket server
       socket.emit('sendMessage', messageData);
       
-      const newMessage = {
-        _id: Date.now(),
-        sender: {
-          _id: user._id,
-          username: user.username,
-          avatar: user.avatar
-        },
-        recipient: {
-          _id: selectedUser._id,
-          username: selectedUser.username,
-          avatar: selectedUser.avatar
-        },
-        content: message.trim(),
-        timestamp: new Date().toISOString()
-      };
-      
-      setMessages(prev => [...prev, newMessage]);
-      scrollToBottom();
-      onMessageSent();
+      // Clear the input
+      setMessage('');
     }
-    
-    setMessage('');
   };
 
   const handleFileClick = () => {

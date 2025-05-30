@@ -23,25 +23,18 @@ export const SocketProvider = ({ children }) => {
       const socketUrl = import.meta.env.VITE_BASE_URL;
       socketInstance = io(socketUrl, {
         withCredentials: true,
-        query: { userId: user._id }
+        query: { userId: user._id },
+        transports: ['websocket', 'polling'],
+        reconnection: true
       });
 
       socketInstance.on("connect", () => {
+        console.log("Socket connected");
         setSocket(socketInstance);
       });
 
-      // Handle community chat messages
-      socketInstance.on('communityMessage', (message) => {
-      });
-
-      // Handle user joining community
-      socketInstance.on('userJoinedCommunity', (data) => {
-        console.log(`${data.username} joined the community`);
-      });
-
-      // Handle user leaving community
-      socketInstance.on('userLeftCommunity', (data) => {
-        console.log(`${data.username} left the community`);
+      socketInstance.on("connect_error", (error) => {
+        console.error("Socket connection error:", error);
       });
     }
 
